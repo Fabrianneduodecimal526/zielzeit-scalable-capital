@@ -213,7 +213,7 @@ sparkle_tools
 # the right version — while every installed client rejects the signature,
 # because Sparkle trusts only SUPublicEDKey. Nothing else here catches that.
 [ "$("$SPARKLE_TOOLS/bin/generate_keys" -p)" = "$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' Info.plist)" ] \
-    || fail "the Keychain signing key does not match SUPublicEDKey — clients would reject this update"
+    || fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — the Keychain signing key does not match SUPublicEDKey, so clients would reject this update"
 
 STAGE=$(mktemp -d)
 gh release download "v$NEW" --pattern "Zielzeit-$NEW.zip" --dir "$STAGE" \
@@ -243,7 +243,7 @@ gh release download "v$NEW" --pattern "Zielzeit-$NEW.zip" --dir "$STAGE" \
 # last, so a clean grep failure (no match) is exit 1 with nothing after it to
 # raise it further, and the script continues.
 grep -q hardwareRequirements "$STAGE/appcast.xml" \
-    && fail "the appcast carries a hardware requirement — Intel users would be cut off from updates"
+    && fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — the appcast carries a hardware requirement, which would cut Intel users off from every future update"
 
 gh release upload "v$NEW" "$STAGE/appcast.xml" --clobber \
     || fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — could not upload appcast.xml"
