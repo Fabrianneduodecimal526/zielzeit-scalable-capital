@@ -8,8 +8,8 @@
 #   2. Rendering the README screenshots, so no real portfolio figures are ever
 #      published:  make shots
 #
-# The figures are invented but internally consistent — a €42 350 portfolio with
-# a €500/mo plan and a 19.7% trailing pace — so the projections it produces look
+# The figures are invented but internally consistent: a €42 350 portfolio with
+# a €500/mo plan and a 19.7% trailing pace, so the projections it produces look
 # like a real account rather than obvious filler. Keep them that way if you edit
 # this: a screenshot showing €1 234,56 everywhere teaches a reader nothing.
 
@@ -43,7 +43,7 @@ JSON
 ;;
 
 "broker transactions")
-# One page, empty cursor — the CLI signals "no more pages" both ways, and this
+# One page, empty cursor. The CLI signals "no more pages" both ways, and this
 # exercises the empty-string case.
 cat <<'JSON'
 {"ok":true,"command":"broker transactions","data":{"result":{"cursor":"","items":[

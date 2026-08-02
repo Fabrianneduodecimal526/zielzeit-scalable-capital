@@ -12,48 +12,48 @@ three scenarios, and a slider that previews saving more.
 ## Data source
 
 All portfolio data comes from the official **Scalable CLI** (`sc`, installed at
-`/opt/homebrew/bin/sc`) — never from scraping or unofficial APIs. Only read-only commands are used,
+`/opt/homebrew/bin/sc`), never from scraping or unofficial APIs. Only read-only commands are used,
 always with `--json`:
 
-- `sc broker overview --json` — current portfolio value (`data.result.valuation.total`) and trailing
+- `sc broker overview --json`: current portfolio value (`data.result.valuation.total`) and trailing
   returns (`data.result.performance[]`, entries keyed by `timeframe`, with `simpleAbsoluteReturn` in
   EUR). **All eight windows are read**, not just `ONE_YEAR`: `INTRADAY`, `TWO_DAYS`, `ONE_WEEK`,
   `ONE_MONTH`, `THREE_MONTHS`, `SIX_MONTHS`, `ONE_YEAR`, `MAX` → `snapshot.returns`, keyed by
-  `ReturnWindow`. An unrecognised `timeframe` is skipped rather than failing the decode — this is the
+  `ReturnWindow`. An unrecognised `timeframe` is skipped rather than failing the decode, because this is the
   same call the valuation comes from, so a new window must not take the portfolio read down.
   **Each entry also carries a `performance` field, and it is useless: the live CLI returns `0` for
   every window**, including ones with a four-figure `simpleAbsoluteReturn`. Percentages are therefore
   derived in `MarketMove` as `gain / (total − gain)`; don't "fix" this by reading `performance`.
   `data.result.timestamps.valuation_timestamp_utc` is the broker's **as-of time**, which outside
-  trading hours sits at the previous session's close (Friday 21:00 UTC all weekend) — that is the
+  trading hours sits at the previous session's close (Friday 21:00 UTC all weekend). That is the
   difference between "fetched a minute ago" and "a minute old", and it drives both the footer stamp and
   the intraday label. There is **no inception date** anywhere in this payload, so the account's age
   cannot be read and `MAX` cannot be annualised
-- `sc broker savings-plans --json` — monthly contribution rate
+- `sc broker savings-plans --json`: monthly contribution rate
   (`data.result.total_savings_plan_amount`) and, per plan in `data.result.items[]`,
-  `dynamization_rate` — the **annual** step-up Scalable applies to a savings plan (whole percent, so
+  `dynamization_rate`, the **annual** step-up Scalable applies to a savings plan (whole percent, so
   `5` means 5% p.a., *not* per month; the options in their UI are 2/3/5/8%). `items` is decoded
   optionally: crypto plans carry no rate and older payloads have no `items` at all, and a required key
   would fail the whole response as "savings plans stopped loading"
-- `sc broker transactions --json --page-size 100 --from-time <iso>` — the trailing year's cash flow,
+- `sc broker transactions --json --page-size 100 --from-time <iso>`: the trailing year's cash flow,
   summed into `snapshot.trailingContributions` so the Dietz contribution is measured rather than
   inferred from the current plan rate. Paged via `data.result.cursor` (an *empty string* also means no
   more pages, so both cases are handled), and only `cash_transaction_type` `DEPOSIT`/`WITHDRAWAL` are
-  counted — see the projection notes for what else appears here and why it must not count
-- `sc whoami --json` — cheapest session check; also yields the first name
+  counted. See the projection notes for what else appears here and why it must not count
+- `sc whoami --json`: cheapest session check; also yields the first name
   (`data.result.personOverview.personalDetails.firstName`)
-- `sc installation-code --json` — needs no session. **Its payload sits directly under `data`**
-  (`display_code`, `installation_code`), not under `data.result` like the broker commands — hence
+- `sc installation-code --json`: needs no session. **Its payload sits directly under `data`**
+  (`display_code`, `installation_code`), not under `data.result` like the broker commands, hence
   `decodeDirect` alongside `decode`
 
 Most responses are wrapped in `{ok, command, data: {result}}`; check `ok`, not just the exit status.
 
 **The CLI is in beta and gated.** A client must be allowlisted by Scalable Capital before it can log
-in at all — the user emails their installation code to `cli.beta@scalable.capital` with the subject
+in at all. The user emails their installation code to `cli.beta@scalable.capital` with the subject
 "Scalable CLI Allowlisting". That human round-trip cannot be automated away, so onboarding is a
 checklist (`SetupView`) that makes every step around it one tap.
 
-The request **must come from the email address registered with Scalable Capital** — they match it to
+The request **must come from the email address registered with Scalable Capital.** They match it to
 an account by sender, and one sent from another address is silently never answered. A `mailto:` link
 opens the default mail account, which frequently is not that address, so `AccessRequest.senderNote`
 is called out in both the popover and `--once`. Keep that warning wherever the request is offered.
@@ -74,28 +74,28 @@ that excludes `/opt/homebrew/bin`, so a bare `sc` works from a shell and fails o
 ## Architecture
 
 A SwiftPM package with a strict split: **all arithmetic in `ZielzeitCore`, all UI in `Zielzeit`.**
-That is what makes the projections unit-testable and both UI harnesses possible. Keep it that way —
+That is what makes the projections unit-testable and both UI harnesses possible. Keep it that way:
 no `import AppKit`/`SwiftUI` in `ZielzeitCore`, no math in the view layer.
 
-- `Sources/ZielzeitCore/` — `Projection` (compounding math, balance curves), `Report` (view model:
+- `Sources/ZielzeitCore/`: `Projection` (compounding math, balance curves), `Report` (view model:
   scenarios, chart curves, what-ifs, summary rows), `Formatting`, `ScalableClient` (read-only `sc`
   invocation + decoding), `PortfolioSnapshot` (model + `PortfolioProviding`), `GoalStore`,
   `Setup` (`SetupState`, `AccessRequest`, `SetupStore`, `SetupProbing`), `Disclaimer` (the caveats),
   `MarketMove` (`ReturnWindow`, `MoveDirection`, derived percentages), `Defaults` (shared domain)
-- `Sources/Zielzeit/` — `main` (mode dispatch), `AppModel` (`@Observable` state, fetching, actions),
+- `Sources/Zielzeit/`: `main` (mode dispatch), `AppModel` (`@Observable` state, fetching, actions),
   `StatusItemController` (status item + popover), `PopoverView`/`HeroView`/`ProjectionChartView`/
   `ScenarioListView`/`WhatIfSliderView`/`MarketChipView`/`GoalEditorView`/`SetupView`/`Theme`
   (SwiftUI), `ViewState`, `LaunchAtLogin`, `StatusItemIcon` (menu bar ring), `AppIconArtwork`
   (app icon), `TextMode`, `RenderMode`, `DevState`
-- `Tests/ZielzeitCoreTests/` — 229 tests covering the math, curves, view model, amount parsing, and
+- `Tests/ZielzeitCoreTests/`: 229 tests covering the math, curves, view model, amount parsing, and
   decoding against payloads *shaped* from real CLI responses. **Shaped, not captured: no fixture may
-  carry real account data** — no real balance, contribution, installation code or ISIN. The repo is
+  carry real account data.** No real balance, contribution, installation code or ISIN. The repo is
   public, and the CI hygiene job fails the build on anything matching those shapes. Keep the
   magnitudes realistic (a portfolio well short of the goals the tests project against) or the
   scenarios stop testing what they were written for
 
 Targets macOS 15 (`Package.swift` platforms and `LSMinimumSystemVersion` must stay in step). Swift 5
-language mode by choice — strict concurrency buys nothing in a single-window menu bar app.
+language mode by choice, since strict concurrency buys nothing in a single-window menu bar app.
 
 ### Projection math
 
@@ -105,22 +105,22 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - Months to goal: `t = ln((G·r + P) / (V·r + P)) / ln(1 + r)`.
 - `Projection.balanceSeries` plots the same recurrence forward for the chart, stopping each curve on
   the goal line. A test asserts the curve meets the goal at exactly the month `monthsToGoal` returns
-  — if you touch either, that cross-check is what keeps the chart and the headline honest.
+  If you touch either, that cross-check is what keeps the chart and the headline honest.
 - Annual rates convert to monthly **geometrically** (`(1+a)^(1/12) − 1`), applied identically to
   every scenario so comparisons are meaningful.
 - Edge cases all covered by tests and which must stay that way: `V ≥ G`, `r = 0` with and without
-  savings, and `r < 0`, where — **with flat contributions** — the balance is capped at `−P/r` and a
-  goal above that ceiling is genuinely unreachable (returning `nil`, not a bogus year — the naive
+  savings, and `r < 0`, where **with flat contributions** the balance is capped at `−P/r` and a
+  goal above that ceiling is out of reach (returning `nil` rather than a bogus year, since the naive
   formula takes the log of a negative number here).
 - **Dynamization (`snapshot.dynamizationRate`) makes the contribution a step function**, which the
   closed form cannot express. Rather than solve numerically, `monthsToGoal` walks forward one
   twelve-month block at a time, applying the *same* closed form at that year's contribution. Exact,
   and `balance(afterMonths:)` blocks identically, so the chart and the headline still cannot drift.
   Deposits are end-of-month, so deposits 1…12 are at the base amount and **deposit 13 is the first
-  raised one** — `ProjectionTests` checks the blocked form against a month-by-month loop at 11/12/13/
+  raised one.** `ProjectionTests` checks the blocked form against a month-by-month loop at 11/12/13/
   24/25 because an off-by-one here is a whole year of growth and invisible by eye.
 - **Nothing in the payload says when the raise fires** (there is a `next_execution_date` for the
-  deposit, no dynamization anniversary), so the first raise is put a full twelve deposits out — the
+  deposit, no dynamization anniversary), so the first raise is put a full twelve deposits out: the
   latest possible raise, hence the most conservative arrival. That is an assumption, not an API fact.
 - **A rising contribution dissolves the `−P/r` ceiling**, so a losing rate is no longer automatically
   unreachable: next year's contribution lifts the ceiling, and a goal out of reach today can come into
@@ -132,7 +132,7 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - **`realizedAnnualRate` measures the past year's contributions rather than estimating them.**
   `snapshot.trailingContributions` is deposits less withdrawals over the trailing year, walked from
   `sc broker transactions`; `12 × monthly` is only the fallback when that cannot be read. An earlier
-  version of this file put the estimate's bias "at about 0.2pp" — measured against a live account it was
+  version of this file put the estimate's bias "at about 0.2pp". Measured against a live account it was
   **over 1pp**, so that figure was wrong by five times. `ContributionsTests` pins the same gap on
   synthetic figures; the fixtures carry no real account data and must stay that way.
 - The estimate errs in **both** directions, because a bigger contribution means a smaller Dietz
@@ -142,7 +142,7 @@ language mode by choice — strict concurrency buys nothing in a single-window m
   There is no safe direction to lean, which is why this is measured instead of corrected for. Both
   directions are tested in `ContributionsTests`.
 - **Cash flows only, and that matters.** A custody migration appears as a matched pair of
-  `NON_TRADE_SECURITY_TRANSACTION` entries — out one day, back the next, same ISINs, near-identical
+  `NON_TRADE_SECURITY_TRANSACTION` entries: out one day, back the next, same ISINs, near-identical
   amounts, a day apart. Counted as contributions those would swamp a
   year of deposits and drive the denominator negative, reporting "no measurable pace" on a healthy
   account, so only `cash_transaction_type` of `DEPOSIT`/`WITHDRAWAL` counts. `INTEREST` is excluded as
@@ -152,14 +152,14 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - The transaction walk is **deliberately non-fatal** (`try?`) and gives up rather than half-measuring:
   a failure part-way through the pages, or a cursor still outstanding at the ten-page cap, returns
   `nil` so the fallback applies. Reporting a partial year as a whole one would be worse than not
-  measuring. When the fallback is in use the disclaimer says so — "Pace assumes deposits ran at
-  today's rate all year" — and that line is absent when the flow was measured.
+  measuring. When the fallback is in use the disclaimer says so ("Pace assumes deposits ran at
+  today's rate all year"), and that line is absent when the flow was measured.
 - Three scenarios: cautious (3%), moderate (6%), realized "your pace". The slider previews arbitrary
   extra contributions via `Report.arrival(extraMonthlySavings:)`.
 - **The menu bar headline uses the realized "your pace" rate, not the moderate 6% assumption.** The
   widget's whole purpose is that the year adapts to how the portfolio is actually performing, so a
   fixed assumption would defeat it. `Report.headlineRate`/`headlineLabel` carry that choice, and the
-  what-ifs, `whatIfHeading` and `arrival(extraMonthlySavings:)` all project at the same rate — a
+  what-ifs, `whatIfHeading` and `arrival(extraMonthlySavings:)` all project at the same rate. A
   what-if at 6% against a headline at 23% reports "time saved" that is really just the gap between
   two assumptions, and can come out negative.
 - **The fallback turns on whether a pace could be measured, never on whether it is flattering.** No
@@ -167,14 +167,14 @@ language mode by choice — strict concurrency buys nothing in a single-window m
   portfolio still shows a year. A measured pace too poor to reach the goal yields **no year** (`—`);
   substituting the moderate year there would show a rosy projection exactly when performance is
   worst. Both halves are tested, and the second is easy to "fix" into the first by accident.
-- Accept that the headline year now moves with the trailing year — that is the intent, not a bug. A
+- Accept that the headline year now moves with the trailing year. That is the intent, not a bug. A
   flat year pushes it out by several years. A losing year can make it `—`, but only with flat
   contributions: with the live 5% p.a. dynamization the rising contribution escapes the ceiling and a
   year is still reported.
 - The slider still never changes the menu bar; it only previews inside the popover. Tests guard that.
 - **The "save more" slider's upper bound is `Report.extraSavingsCeiling`**, not a constant: the larger
   of twice the current contribution or enough extra to *halve* the time to the goal, rounded up to a
-  round number. Doubling alone scales with saving habit but not with ambition — it was fine for a
+  round number. Doubling alone scales with saving habit but not with ambition: it was fine for a
   €50 000 goal and stopped a decade short of the interesting part of a €1 000 000 one, while the
   "reach by" slider was happily quoting figures the other slider could not reach. **Halving, not the
   earliest offered target year**: reaching €1 000 000 by next year needs about €55 000/mo, and a slider
@@ -189,7 +189,7 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - **The horizon runs to December of the chosen year**, because "reach it by 2031" means any time in
   2031. Consequence worth keeping in mind: at the projected year itself the figure comes out *below*
   what is being saved now (you would arrive in January, the horizon allows until December), which reads
-  as a bug unless the extra months are named — hence the slider label says **"end of 2030"**, not
+  as a bug unless the extra months are named, hence the slider label says **"end of 2030"**, not
   "2030". Don't shorten it.
 - `0` from that solve means growth alone reaches the goal, and both the slider and `Format.requiredRow`
   say so in words rather than printing `€0/mo`.
@@ -200,40 +200,40 @@ language mode by choice — strict concurrency buys nothing in a single-window m
   year the slider cannot represent.
 - `AppModel.chosenTargetYear` is a **stored** property seeded by `seedTargetYear(for:)` when a report
   arrives. It was briefly a computed get/set binding, and a `Slider` bound to one writes its own
-  position back during layout — the knob landed on an arbitrary year instead of the projected one. If
+  position back during layout, and the knob landed on an arbitrary year instead of the projected one. If
   the slider ever opens on the wrong year again, that is the cause.
 - `Theme.headlineGradient(forScenario:_:)` and `areaGradient(forScenario:)` take the headline
   scenario's own hue (amber for "your pace"), so the hero year matches the curve it describes.
   `ScenarioListView` and `ProjectionChartView` key their emphasis off `report.headlineLabel` rather
-  than a literal `"Moderate"` — that is what keeps the highlighted row, the thick curve, the area
+  than a literal `"Moderate"`. That is what keeps the highlighted row, the thick curve, the area
   fill and the hero from drifting apart.
 
 ## Development commands
 
-- `make once` — print the report as text; fastest check of the numbers, no UI
-- `make ui [STATE=…]` — rasterize the popover to `.build/ui-{light,dark}.png` via `ImageRenderer`
-- `make icons` — draw the menu bar glyph at every progress value, with fit diagnostics
-- `make icon` — regenerate `Zielzeit.icns` from `AppIconArtwork` (`make app` depends on it)
-- `make open [STATE=…]` — launch with the popover already open, for a real screenshot
-- `make shots` — regenerate the README images in `docs/` (always against `Scripts/sc-demo`, never a
+- `make once`: print the report as text; fastest check of the numbers, no UI
+- `make ui [STATE=…]`: rasterize the popover to `.build/ui-{light,dark}.png` via `ImageRenderer`
+- `make icons`: draw the menu bar glyph at every progress value, with fit diagnostics
+- `make icon`: regenerate `Zielzeit.icns` from `AppIconArtwork` (`make app` depends on it)
+- `make open [STATE=…]`: launch with the popover already open, for a real screenshot
+- `make shots`: regenerate the README images in `docs/` (always against `Scripts/sc-demo`, never a
   real account). **Every image's source width must be exactly twice its `width=` in the README**, and
   "exactly" is the whole point rather than a minimum. A Retina viewer needs `2 × width=` device pixels:
   hit that and the blit is 1:1 pixel-exact, while a 1× viewer halves it on a clean 2×2 box filter. Any
   other figure resamples on a fractional ratio and reads soft *however much resolution you throw at
-  it* — a 1376px source at `width="480"` is 1.43:1 on Retina and visibly mushier than a 688px source at
+  it*: a 1376px source at `width="480"` is 1.43:1 on Retina and visibly mushier than a 688px source at
   `width="344"`, which is smaller and pixel-exact. That is the trap this went through twice: the
   original blur was a 688px capture shown at 380px (1.81:1), and "fix" it by raising the scale to 4×
   and it stays blurry at a different ratio. So `--scale 2` for the popover and setup shots (688px →
   `width="344"`, which is also the popover's natural point size), `--scale 8` for the menu bar item
   (596px → `width="298"`), and `width="495"` for the 1980px states sheet. Verify, don't assume: divide
   `sips -g pixelWidth` by the `width=` and confirm both it and half of it are whole numbers.
-  **A single PNG at exactly 2× is the whole technique** — the
+  **A single PNG at exactly 2× is the whole technique.** The
   `srcset` GitHub allows is only on `<source>` inside `<picture>`, and only the `prefers-color-scheme`
   form is documented, so density variants are not a route here.
 - `make test`, `make run`, `make install`, `make help`
 
 **`make install` needs an admin account.** `/Applications` is `root:admin`, so on a standard (non-admin)
-account the `cp` fails — and the `rm -rf` before it is a silent no-op when nothing is installed, so the
+account the `cp` fails, and the `rm -rf` before it is a silent no-op when nothing is installed, so the
 failure destroys nothing. `make run` launches the packaged app straight out of the repo and is the
 working path there; `sudo make install` or a user-level `~/Applications` are the alternatives.
 
@@ -246,7 +246,7 @@ colour is otherwise unreviewable on demand.
 
 The year and the percentage barely move between openings, which is what made the app easy to stop
 looking at. The fix is not on the progress bar, and that is worth not re-litigating: **at goal scale
-market movement is geometrically invisible.** A month's −€234 against a €100 000 goal is 0.23pp — about
+market movement is geometrically invisible.** A month's −€234 against a €100 000 goal is 0.23pp, about
 half a point of a 220pt bar; a whole year is 3.8pt. Any tick or ghost marker for recent movement is
 sub-pixel, the same arithmetic that killed the 66pt hero ring. And recolouring the bar would break what
 it means: it is emerald because it measures progress toward the goal, so a red bar at 12% reads as
@@ -257,7 +257,7 @@ it means: it is emerald because it measures progress toward the goal, so a red b
   hours a week stale under a caption reading "today" (`ReturnWindow.isSessionBound` marks it). A week
   always contains trading. A test pins the choice.
 - **`ReturnWindow.cyclable` excludes `TWO_DAYS` and `MAX`.** `TWO_DAYS` is indistinguishable from
-  `INTRADAY` whenever the market is shut — the fixture shows both at the same figure — and "two days"
+  `INTRADAY` whenever the market is shut (the fixture shows both at the same figure), and "two days"
   is not a window anyone thinks in. `MAX` is the account's whole life, not a recent move.
 - **The window is always named on screen, and that is a correctness matter, not a label.** The sign
   genuinely differs between windows: an account can be up on the week and **down on the month**. A
@@ -266,7 +266,7 @@ it means: it is emerald because it measures progress toward the goal, so a red b
 - **Tapping the chip rotates the window** (`Report.window(after:)`, cycling only through windows the
   payload actually carries, wrapping at the end). With one window it is a no-op and `MarketChipView`
   is handed a `nil` cycle action so it does not look tappable.
-- `AppModel.marketWindow` is an **override**, `nil` meaning "use `Report.initialWindow`" — so the chip
+- `AppModel.marketWindow` is an **override**, `nil` meaning "use `Report.initialWindow`", so the chip
   follows the default until the reader chooses, and `alignMarketWindow(to:)` drops a chosen window a
   new payload no longer reports. Same class of bug as a `Slider` holding an out-of-range value, which
   is why `AppModel.align(to:)` now does both (it was `alignSliders(to:)`).
@@ -284,7 +284,7 @@ it means: it is emerald because it measures progress toward the goal, so a red b
   popover highlights the status item. Drawing it costs a wider canvas and leaves `button.title` plain.
 - `StatusItemController.observeTitle()` **must track `menuBarDirection`** alongside `menuBarText` and
   `iconProgress`, or the caret keeps the previous refresh's direction whenever a fetch moves the market
-  but not the year or the percentage — which is most of them.
+  but not the year or the percentage, which is most of them.
 - The menu bar always uses the default window: a status item has nothing to tap, so unlike the popover
   it cannot let the reader choose. Judge the caret with `make icons` (it draws up/down/flat at 6×),
   never by eye from a screenshot of the real bar.
@@ -298,7 +298,7 @@ it means: it is emerald because it measures progress toward the goal, so a red b
 - The footer shows **"Valued <stamp>" in preference to the fetch time**, with the fetch time moved to
   the tooltip. A weekend fetch of Friday's close used to be stamped with the minute it was asked for,
   which claimed a freshness the figures do not have. `Format.valuationStamp` adds the day only when it
-  is not today's — a bare `11:00 PM` beside Friday's figures reads as this evening.
+  is not today's: a bare `11:00 PM` beside Friday's figures reads as this evening.
 - **A missing timestamp counts as current.** No evidence of staleness is not evidence of staleness, and
   the alternative is captioning perfectly fresh figures as belonging to a previous session.
 
@@ -306,17 +306,17 @@ it means: it is emerald because it measures progress toward the goal, so a red b
 
 `Report.realGoalValue` restates the goal in today's money at the projected horizon
 (`Projection.realValue`, discounting geometrically at `Projection.assumedInflation` = 2%). The hero
-carries it as a small line under the sentence — *"that's about €91 775 in today's money"* — and `--once`
+carries it as a small line under the sentence, *"that's about €91 775 in today's money"*, and `--once`
 as an `In today's money` block.
 
 - **Always shown, not behind a toggle.** Over the horizons this app quotes, inflation is the largest
-  single gap between the headline and reality — larger than anything else the disclaimer lists — and a
+  single gap between the headline and reality, larger than anything else the disclaimer lists, and a
   caveat behind a disclosure triangle is one nobody reads.
 - **The goal is discounted, not the contribution inflated.** The goal is the number the user chose and
   the one they picture, so restating it is what makes the erosion legible: "€100 000 then is €91 775
   now" lands where "you'll need €108 000" does not.
 - Absent under a twelve-month horizon (the restatement would be the same figure), when there is no
-  arrival to discount to, and while the slider is previewing — two amounts moving at once is one too
+  arrival to discount to, and while the slider is previewing, since two amounts moving at once is one too
   many.
 - **The disclaimer's inflation line is now conditional**: "Before tax; today's money assumes 2%
   inflation." when the figure is on screen, "Before tax and inflation." when it is not. Asserted in both
@@ -324,22 +324,22 @@ as an `In today's money` block.
   figure sits on screen is exactly the drift those tests exist to catch.
 
 **Menu bar icon.** A progress ring drawn in `StatusItemIcon` with the percentage *inside* it (a
-checkmark at 100%), and the projected year beside it as text (`Report.menuBarText` — the year alone,
+checkmark at 100%), and the projected year beside it as text (`Report.menuBarText`, the year alone,
 since the ring carries the percentage). `Report.statusTitle` still holds the older one-line
 `🎯 23% · 2030` form, now used by `--once` only. **The status item deliberately has no tooltip**
 (`button.toolTip = nil`): hovering repeated what the ring and year already show.
 
 `StatusItemIcon.Style` has three variants and the default is deliberate:
 
-- `.brand` (in use) — the app icon's gradient ring, in colour. Because it is *not* a template image,
+- `.brand` (in use): the app icon's gradient ring, in colour. Because it is *not* a template image,
   AppKit will not retint it, so it must pick its own contrast from the bar (`isDarkBar`) **and** be
   redrawn when the theme changes. `StatusItemController.observeAppearance()` does that via
   `AppleInterfaceThemeChangedNotification`, reading `effectiveAppearance` a beat later because the
   notification arrives before it updates. Delete that observer and the icon silently keeps the old
   theme's colours.
-- `.template` — the monochrome original, which AppKit tints for free. Kept as the fallback if the
+- `.template`: the monochrome original, which AppKit tints for free. Kept as the fallback if the
   colour version ever proves a problem.
-- `.plate` — the full app icon, squircle and all. **Rejected, and worth not re-litigating:** the plate
+- `.plate`: the full app icon, squircle and all. **Rejected, and worth not re-litigating:** the plate
   costs roughly a third of the digit size at 20pt (compare `make icons` against
   `--icons … --plate`), and a dark squircle on a dark menu bar barely reads as a shape.
 
@@ -351,20 +351,20 @@ they are not. `--icons` prints a fit ratio per value for exactly that reason.
 
 **Hero layout.** Full width, stacked: label *and the market chip on the same row*, year at 44pt, the
 sentence, then a slim progress bar. The chip shares the label's row because that row's right-hand side
-was empty, so it costs no height — and the top-right corner is where a ticker reads naturally.
-**The 66pt progress ring it used to sit beside is gone, on purpose** — at the fractions this app
+was empty, so it costs no height, and the top-right corner is where a ticker reads naturally.
+**The 66pt progress ring it used to sit beside is gone, on purpose.** At the fractions this app
 actually shows (1% against a €1m goal) a ring is a nub on a near-empty track, which reads as a
 rendering fault rather than as progress, and it consumed the third of the width the sentence needed,
 forcing a large goal onto two lines. `ProgressBar` replaces it and inherits the ring's one real lesson:
 a round-capped fill narrower than its own height renders as a floating dot, so the fill has a width
-floor. The percentage label beside it is fixed at 36pt — sized for `100%`, which truncates to `10…` if
+floor. The percentage label beside it is fixed at 36pt, sized for `100%`, which truncates to `10…` if
 that width is set by eye from a low value. The bar stays emerald even when the headline is amber,
 because it measures progress toward the goal rather than the projection. The menu bar keeps its ring;
 that one carries a percentage inside it at 20pt and works there.
 
 **The facts list carries only Portfolio, Saving and Past year.** Goal and Remaining were removed: the
 hero states the goal amount in prose and the bar states the percentage, so both rows restated the top
-of the popover in a smaller font. One consequence to accept — the goal amount now appears **once**, in
+of the popover in a smaller font. One consequence to accept: the goal amount now appears **once**, in
 the hero sentence, and `Remaining` is not shown at all.
 
 **The chart's goal line is deliberately unlabelled.** The hero states the goal amount immediately
@@ -374,7 +374,7 @@ space. Curves stopping dead on the line carry it.
 **Hero caption.** Prose rather than a data row: `In 15.6 years you'll have about €1 000 000`, from
 `Format.duration(months:)` (which switches to whole months under two years, since "1.5 years" is a
 strange way to say eighteen months). It is built by **concatenating `Text` runs**, not as one string,
-so the two figures carry weight the joining words do not — `HeroView.projection(months:)`. The amount
+so the two figures carry weight the joining words do not (`HeroView.projection(months:)`). The amount
 takes the goal's emerald rather than the headline hue: the 44pt year directly above is already amber,
 and a second amber number beside it competes instead of complementing. The duration comes *first* so a
 large goal wraps before the amount instead of stranding "in" at the end of a line, and the `Text`
@@ -390,7 +390,7 @@ already paid for: AppKit cannot stroke with a gradient, so the arc's gradient co
 fall inside the plate leaves its own edge visible as a crescent, so the sheen is linear.
 
 **The disclaimer.** `Disclaimer.assumptions(for:)` builds the caveats *from the report*, so they quote
-the rate, contribution and goal actually on screen — "assumes a constant return" is easy to nod past,
+the rate, contribution and goal actually on screen. "Assumes a constant return" is easy to nod past,
 "assumes 22.7% every year" is not. Three of the lines are conditional and must stay that way: no claim
 of a measured pace when the rate is the moderate fallback, no step-up caveat for a flat plan, no
 contribution caveat without a savings plan. `DisclaimerTests` asserts each of those in *both*
@@ -398,7 +398,7 @@ directions, since only the absence assertions catch a caveat that has stopped ma
 
 One line each, under 70 characters, enforced by a test: an earlier draft ran to five sentences of
 hedging and read as filler, which is a disclaimer nobody takes in. `DisclaimerView` shows the headline
-collapsed and expands to the list — collapsed by default, never dismissible, never behind a menu, since
+collapsed and expands to the list. Collapsed by default, never dismissible, never behind a menu, since
 a 44pt year with nothing beside it reads as a fact. `initiallyExpanded` seeds `@State` through
 `State(initialValue:)` rather than `onAppear`, which `ImageRenderer` never fires; that is what makes
 `STATE=caveats` render the open state.
@@ -408,7 +408,7 @@ a 44pt year with nothing beside it reads as a fact. `initiallyExpanded` seeds `@
 **Verifying UI changes.** A popover cannot be opened by a script without accessibility permission, so
 there are two harnesses and each has a blind spot:
 
-- `make ui` is offscreen and crisp, but `ImageRenderer` cannot rasterize AppKit-backed controls — the
+- `make ui` is offscreen and crisp, but `ImageRenderer` cannot rasterize AppKit-backed controls: the
   slider and the `Menu` come out as coloured blocks. Do not read that as a bug.
 - `make open` shows the real thing including those controls, then `screencapture -R<x,y,w,h>` around
   the status item and read the PNG.
@@ -436,8 +436,8 @@ restores the real app, and clear the test residue with
 
 Environment overrides, honoured by every mode:
 
-- `ZIELZEIT_GOAL` — use a goal without touching the saved one
-- `ZIELZEIT_SC_BIN` — point at a stub to exercise failure states (`/usr/bin/false` for no output, a
+- `ZIELZEIT_GOAL`: use a goal without touching the saved one
+- `ZIELZEIT_SC_BIN`: point at a stub to exercise failure states (`/usr/bin/false` for no output, a
   script printing `please run sc login` for the auth path)
 
 ## Footguns already paid for

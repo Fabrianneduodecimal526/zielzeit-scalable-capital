@@ -5,7 +5,7 @@ name: Release
 #
 # Note what this does NOT do: notarize. That needs a paid Apple Developer ID,
 # so the artifacts are ad-hoc signed and macOS asks the user to confirm the app
-# once on first launch. The README documents that step — if a Developer ID is
+# once on first launch. The README documents that step. If a Developer ID is
 # ever added, sign and notarize here and the instructions can go.
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
 
             1. Download **Zielzeit.dmg** below, open it, and drag Zielzeit to Applications.
             2. Open it from Applications. macOS will say it "cannot be opened because Apple
-               cannot check it for malicious software" — that is expected: this app is
+               cannot check it for malicious software". That is expected: this app is
                open source and ad-hoc signed, but not notarized (that needs a paid Apple
                Developer account).
             3. Go to **System Settings → Privacy & Security**, scroll down, and click
