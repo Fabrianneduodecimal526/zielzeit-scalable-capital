@@ -565,6 +565,34 @@ from a releases page with no cask, so without it a user who installed v1.0 runs 
   account it ran on is not in the `admin` group, and dragging to `/Applications` from the DMG is the
   common path users actually take. Verifying it needs an admin account and has not been done.
 
+## Usage badges
+
+The README's `active` and `downloads` badges come from `Scripts/usage-badges`, run as a step of the
+Pages workflow. **The app sends nothing and must not start.** Both figures are counted by GitHub on
+the way out of the release API, and neither can identify anyone — that property is the whole reason
+this shape was chosen over a launch ping.
+
+- **`active` is a delta, never the raw counter.** Sparkle polls the appcast every 24h (no
+  `SUScheduledCheckInterval`, so the default applies) plus once per launch, so the day-over-day rise
+  in `appcast.xml`'s download count is roughly one per install still running. The absolute count is
+  every check ever made and climbs whether or not anyone uses the app, which is why the script keeps
+  a sample history and reports the difference, scaled to a day so a missed run reads as a normal day
+  rather than a spike.
+- **`appcast.xml` is summed across all releases.** `/releases/latest/download/appcast.xml` resolves
+  to the newest release's asset, so cutting a release restarts that asset's counter at zero; only the
+  sum is monotonic. `.dmg` is summed the same way, and `Zielzeit.dmg` alongside `Zielzeit-1.2.dmg` is
+  not a double count — they are the same build published twice so the "latest" URL can stay stable,
+  and a person takes one or the other.
+- **The history lives on the published site, not in git**, so there is no daily bot commit. It is
+  re-fetched from the live URL each run, appended to, and republished. Accept the consequence: wiping
+  the Pages deployment resets the series and `active` reads `—` until two samples exist.
+- The Pages workflow therefore runs on a **daily cron** as well as on pushes — no deploy, no sample,
+  no figure. A sample is only taken when the newest one is 20h old, so the pushes that also run the
+  step do not fill the history with minutes-apart entries whose deltas are all zero. The step is
+  `continue-on-error`, because a rate-limited API call must not stop the site publishing.
+- At this scale the number is noisy and should be read as an order of magnitude: with installs in the
+  low tens, one person on holiday moves it several percent.
+
 ## Footguns already paid for
 
 - **`GoalStore` domain.** The goal lives in `com.zielzeit.Zielzeit`, reached two different ways:

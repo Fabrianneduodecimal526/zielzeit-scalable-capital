@@ -8,6 +8,9 @@ dist/
 
 # Copied from docs/ by `make site` and by the Pages workflow, never committed.
 site/img/
+# Written by Scripts/usage-badges during the Pages build. The sample history it
+# needs lives on the published site, not in git, so nothing here is a source.
+site/badge/
 .playwright-mcp/
 
 # Working notes from the Superpowers workflow: design specs, implementation
