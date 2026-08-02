@@ -93,6 +93,12 @@ let controller = MainActor.assumeIsolated { () -> StatusItemController in
     // `--open [state]` presents the popover on launch, optionally in a named
     // state, so the real UI can be screenshotted during development.
     guard let index = arguments.firstIndex(of: "--open") else {
+        // Only here: every capture and text mode has already exited above, so
+        // this is the one path that is a real, long-running app. `--open` is
+        // deliberately excluded below — it is a development harness, usually
+        // pinned to a DevState, and it should not replace the binary out from
+        // under a screenshot.
+        UpdateController.start()
         return StatusItemController()
     }
 

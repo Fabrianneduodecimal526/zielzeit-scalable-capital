@@ -40,5 +40,26 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Zielzeit</string>
+	<!-- Sparkle. The feed is a release asset at a fixed name, which works because
+	     GitHub serves /releases/latest/download/<name> — so a filename that never
+	     changes is a URL that survives every release, the same trick Zielzeit.dmg
+	     already relies on. Consequence: a release published without an appcast.xml
+	     makes this 404 and silently stops all update checks, which is why
+	     Scripts/release verifies both the URL and the version inside it. -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest/download/appcast.xml</string>
+	<!-- There is no Developer ID to sign with, so EdDSA is not belt-and-braces
+	     here, it is the entire verification. The private half is in the
+	     maintainer's login Keychain and never goes near CI; see CONTRIBUTING. -->
+	<key>SUPublicEDKey</key>
+	<string>3bRE032IL1zIJYC7IxsqaLeN7pO7NVqvEDX94mNOWYU=</string>
+	<!-- Both of these are set so Sparkle never asks. Left unset, Sparkle shows a
+	     "check for updates automatically?" prompt on first launch; together they
+	     mean it checks, downloads and installs without a dialog. Sparkle persists
+	     them into com.zielzeit.Zielzeit, the same defaults domain as the goal. -->
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<true/>
 </dict>
 </plist>
