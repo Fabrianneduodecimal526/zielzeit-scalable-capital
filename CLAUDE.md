@@ -294,6 +294,12 @@ the device.**
   `srcset` GitHub allows is only on `<source>` inside `<picture>`, and only the `prefers-color-scheme`
   form is documented, so density variants are not a route here.
 - `make test`, `make run`, `make install`, `make help`
+- `Scripts/release [VERSION|major|minor|patch] [--dry-run]`: cut a release — bump, PR, merge, tag,
+  and verify the published downloads. **Never do those steps by hand**: v1.1 shipped with an empty
+  asset list because the workflow's draft was left unpublished and a second release was created on
+  the same tag, which strands the artifacts on the draft. The workflow publishes directly now
+  (`draft: false`) and the script fetches the download URL before calling the release done. See
+  CONTRIBUTING for the rest
 
 **`make install` needs an admin account.** `/Applications` is `root:admin`, so on a standard (non-admin)
 account the `cp` fails, and the `rm -rf` before it is a silent no-op when nothing is installed, so the
