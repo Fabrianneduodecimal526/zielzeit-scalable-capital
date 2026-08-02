@@ -429,6 +429,10 @@ h3 { font-size: 20px; font-weight: 600; line-height: 1.32; margin: 0 0 10px; }
 }
 .cards h3 { font-size: 17.5px; }
 .cards p { margin: 0 0 16px; font-size: 15.5px; line-height: 1.6; color: var(--body); }
+/* The safety cards used to end with a command block, and the paragraph's bottom
+   margin was the gap above it. With the commands moved into one disclosure the
+   margin would hang below the last line as dead space. */
+.cards p:last-child { margin-bottom: 0; }
 .cards--two p { margin: 16px 0 0; }
 
 pre {
@@ -443,18 +447,66 @@ pre {
 pre code { font: 12.5px/1.65 var(--mono); color: var(--ink); white-space: pre; }
 .dim { color: var(--muted); }
 
-/* ── The audit block ───────────────────────────────────────────
-   A terminal, not a card: this is the one thing on the page a reader can
-   reproduce, so it should look like the thing they would run rather than like
-   more marketing. Dark, alone on an otherwise light page: a pale "terminal" reads
-   as a quotation of one, and the tick colour needs a dark ground to carry.
-   The output is 104 characters at its widest and will not fold, so it scrolls
-   inside its own box and the page body never does. ── */
-.audit { margin: 28px 0 44px; }
-.audit__cmd {
-  background: var(--alt);
-  border-color: var(--line);
+/* ── Proof, then the terminal behind it ────────────────────────
+   The reader this section exists for is nervous about a third-party app reading
+   their brokerage account, and is not necessarily a developer. So the visible
+   layer is one sentence and a tick, and the command that backs it is a click
+   away: a wall of monospace naming URLSession and Keychain reads as "this was
+   written for someone else", which is the opposite of reassuring.
+   The output inside is dark, alone on an otherwise light page — a pale
+   "terminal" reads as a quotation of one, and the tick colour needs a dark
+   ground to carry. It is 104 characters at its widest and will not fold, so it
+   scrolls inside its own box and the page body never does. ── */
+.proof {
+  display: flex; align-items: flex-start; gap: 11px;
+  margin: 26px 0 0;
+  font-size: 16px;
 }
+.proof__tick {
+  flex: none;
+  width: 22px; height: 22px; margin-top: 1px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px; font-weight: 700; line-height: 22px; text-align: center;
+}
+.proof b { font-weight: 600; }
+
+.reveal {
+  margin: 14px 0 40px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.reveal summary {
+  padding: 13px 18px;
+  font-size: 15px; font-weight: 600;
+  color: var(--accent-d);
+  cursor: pointer;
+  list-style: none;
+}
+/* The default triangle sits too high against a 15px line, and Safari draws its
+   own marker unless both of these are set. */
+.reveal summary::-webkit-details-marker { display: none; }
+.reveal summary::after {
+  content: '＋';
+  float: right;
+  font-weight: 400;
+  color: var(--muted);
+}
+.reveal[open] summary::after { content: '－'; }
+.reveal summary:hover { color: var(--accent); }
+.reveal__body { padding: 0 18px 18px; }
+.reveal__body p { margin: 0 0 14px; font-size: 15px; line-height: 1.6; color: var(--body); }
+.reveal__body p:last-child { margin: 14px 0 0; }
+.reveal__body code {
+  font: 13px/1 var(--mono);
+  background: var(--alt);
+  border: 1px solid var(--line-2);
+  border-radius: 5px;
+  padding: 2px 5px;
+}
+.reveal__body pre code { border: 0; background: none; padding: 0; }
 .audit__out {
   margin-top: 12px;
   background: #10201a;
@@ -464,19 +516,6 @@ pre code { font: 12.5px/1.65 var(--mono); color: var(--ink); white-space: pre; }
 .audit__out code { color: #d7e4de; }
 .audit__out b { color: #fff; font-weight: 600; }
 .audit__out i { color: #4ede9e; font-style: normal; font-weight: 700; }
-.audit__note {
-  margin: 14px 0 0;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--muted);
-}
-.audit__note code {
-  font: 13px/1 var(--mono);
-  background: var(--alt);
-  border: 1px solid var(--line-2);
-  border-radius: 5px;
-  padding: 2px 5px;
-}
 @media (max-width: 720px) {
   /* Small enough that 104 columns is a long horizontal scroll either way; the
      smaller type keeps the shape of the table legible while it scrolls. */
