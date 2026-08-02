@@ -88,7 +88,11 @@ no `import AppKit`/`SwiftUI` in `ZielzeitCore`, no math in the view layer.
   (SwiftUI), `ViewState`, `LaunchAtLogin`, `StatusItemIcon` (menu bar ring), `AppIconArtwork`
   (app icon), `TextMode`, `RenderMode`, `DevState`
 - `Tests/ZielzeitCoreTests/` — 229 tests covering the math, curves, view model, amount parsing, and
-  decoding against payloads captured verbatim from the real CLI
+  decoding against payloads *shaped* from real CLI responses. **Shaped, not captured: no fixture may
+  carry real account data** — no real balance, contribution, installation code or ISIN. The repo is
+  public, and the CI hygiene job fails the build on anything matching those shapes. Keep the
+  magnitudes realistic (a portfolio well short of the goals the tests project against) or the
+  scenarios stop testing what they were written for
 
 Targets macOS 15 (`Package.swift` platforms and `LSMinimumSystemVersion` must stay in step). Swift 5
 language mode by choice — strict concurrency buys nothing in a single-window menu bar app.
@@ -216,8 +220,10 @@ language mode by choice — strict concurrency buys nothing in a single-window m
   display width in HTML, so the source must carry at least twice that in pixels or it reads soft on
   every Retina screen. The popover was shown at 380px from a 2× capture (688px = 1.8×), which is why
   it looked blurry; it is `--scale 4` now against a 480px display width, and the menu bar item
-  `--scale 8` against 260px. Multiply, don't
-  guess: check `sips -g pixelWidth` against the `width=` in the README before shipping new images.
+  `--scale 8` against 260px. Multiply, don't guess: check `sips -g pixelWidth` against the `width=` in
+  the README before shipping new images. **A single high-resolution PNG is the whole technique** — the
+  `srcset` GitHub allows is only on `<source>` inside `<picture>`, and only the `prefers-color-scheme`
+  form is documented, so density variants are not a route here.
 - `make test`, `make run`, `make install`, `make help`
 
 **`make install` needs an admin account.** `/Applications` is `root:admin`, so on a standard (non-admin)
