@@ -50,7 +50,7 @@ struct HeroView: View {
             // height at all, and the top-right corner is where a ticker reads
             // naturally.
             HStack(alignment: .firstTextBaseline) {
-                SectionLabel(text: report.isGoalReached ? "Goal reached" : "Projected")
+                SectionLabel(text: report.isGoalReached ? Strings.goalReached : Strings.projected)
                 Spacer(minLength: 8)
                 if let move {
                     MarketChipView(move: move, onCycle: onCycleWindow)
@@ -58,7 +58,7 @@ struct HeroView: View {
             }
 
             if report.isGoalReached {
-                Text("Done")
+                Text(Strings.done)
                     .font(Theme.display(38))
                     .foregroundStyle(Theme.accentGradient(colorScheme))
             } else if let year {
@@ -71,7 +71,7 @@ struct HeroView: View {
                     .contentTransition(.numericText(countsDown: true))
                     .animation(.snappy(duration: 0.25), value: year)
             } else {
-                Text("Not yet")
+                Text(Strings.notYet)
                     .font(Theme.display(30))
                     .foregroundStyle(.secondary)
             }
@@ -89,14 +89,15 @@ struct HeroView: View {
     /// Progress toward the goal: the percentage, then the bar it labels.
     private var progress: some View {
         HStack(spacing: 9) {
-            Text("\(Int((report.progress * 100).rounded()))%")
+            Text(Format.wholePercent(report.progress))
                 .font(Theme.numeric(11, weight: .bold))
                 .foregroundStyle(.secondary)
                 .contentTransition(.numericText())
                 // Fixed width so the bar starts in the same place whether the
                 // label reads 1% or 100% — wide enough for the latter, which
                 // truncates to "10…" if this is set by eye from a low value.
-                .frame(width: 36, alignment: .leading)
+                // German needs the extra points for the space before the sign.
+                .frame(width: AppLanguage.current == .german ? 42 : 36, alignment: .leading)
 
             ProgressBar(progress: report.progress)
         }
@@ -118,7 +119,7 @@ struct HeroView: View {
         let connective = Theme.caption
         let figure = Theme.numeric(13, weight: .bold)
 
-        return Text("In ")
+        return Text(Strings.sentenceIn)
             .font(connective)
             .foregroundStyle(.secondary)
         + Text(Format.duration(months: months))
@@ -131,7 +132,7 @@ struct HeroView: View {
                     ? AnyShapeStyle(Theme.color(forScenario: report.headlineLabel))
                     : AnyShapeStyle(.primary)
             )
-        + Text(" you'll have about ")
+        + Text(Strings.sentenceYouWillHave)
             .font(connective)
             .foregroundStyle(.secondary)
         + Text(Format.euro(report.goal))
@@ -151,13 +152,13 @@ struct HeroView: View {
     private var purchasingPower: some View {
         if !isPreviewing, let real = report.realGoalValue {
             (
-                Text("that's about ")
+                Text(Strings.thatsAbout)
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
                 + Text(Format.euro(real))
                     .font(Theme.numeric(10, weight: .semibold))
                     .foregroundStyle(.secondary)
-                + Text(" in today's money")
+                + Text(Strings.inTodaysMoney)
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
             )
@@ -168,7 +169,7 @@ struct HeroView: View {
     @ViewBuilder
     private var caption: some View {
         if report.isGoalReached {
-            Text("\(Format.euro(report.snapshot.total)) of \(Format.euro(report.goal))")
+            Text(Strings.amountOfGoal(Format.euro(report.snapshot.total), Format.euro(report.goal)))
                 .font(Theme.caption)
                 .foregroundStyle(.secondary)
         } else if let months {
@@ -190,7 +191,7 @@ struct HeroView: View {
             // Naming the rate would misdescribe this: with a dynamized plan the
             // contribution rises every year, so the remaining way to get here is
             // the 100-year horizon in `Projection.maxMonths`, not the rate alone.
-            Text("Not within 100 years at this pace")
+            Text(Strings.notWithin100Years)
                 .font(Theme.caption)
                 .foregroundStyle(.secondary)
         }

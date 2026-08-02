@@ -17,8 +17,8 @@ enum ViewState {
     /// Text shown beside the menu bar icon. Empty means icon only.
     var menuBarText: String {
         switch self {
-        case .setup: return "Set up"
-        case .noGoal: return "Set goal"
+        case .setup: return Strings.menuBarSetUp
+        case .noGoal: return Strings.menuBarSetGoal
         case .loading: return "…"
         case .ready(let report): return report.menuBarText
         case .failure: return ""

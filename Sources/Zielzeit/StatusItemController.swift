@@ -202,15 +202,15 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
     /// Right-click menu, so quitting never depends on the popover rendering.
     private func showFallbackMenu() {
         let menu = NSMenu()
-        menu.addItem(withTitle: "Set goal…", action: #selector(setGoal), keyEquivalent: "").target = self
-        menu.addItem(withTitle: "Refresh now", action: #selector(refresh), keyEquivalent: "").target = self
+        menu.addItem(withTitle: Strings.setGoalEllipsis, action: #selector(setGoal), keyEquivalent: "").target = self
+        menu.addItem(withTitle: Strings.refreshNow, action: #selector(refresh), keyEquivalent: "").target = self
         if LaunchAtLogin.isSupported {
-            let item = menu.addItem(withTitle: "Launch at login", action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+            let item = menu.addItem(withTitle: Strings.launchAtLogin, action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
             item.target = self
             item.state = LaunchAtLogin.isEnabled ? .on : .off
         }
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Zielzeit", action: #selector(quit), keyEquivalent: "q").target = self
+        menu.addItem(withTitle: Strings.quitZielzeit, action: #selector(quit), keyEquivalent: "q").target = self
 
         // Popped up directly rather than assigned to `statusItem.menu` and
         // clicked. A non-nil `statusItem.menu` makes AppKit swallow the button
@@ -235,7 +235,7 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
             try LaunchAtLogin.toggle()
         } catch {
             let alert = NSAlert()
-            alert.messageText = "Could not change the login item"
+            alert.messageText = Strings.couldNotChangeLoginItem
             alert.informativeText = error.localizedDescription
             alert.runModal()
         }

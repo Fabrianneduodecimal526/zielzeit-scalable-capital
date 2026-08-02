@@ -62,9 +62,9 @@ struct PopoverView: View {
             case .noGoal:
                 EmptyStateView(
                     symbol: "target",
-                    title: "Set a goal",
-                    message: "Zielzeit needs a target amount before it can tell you when you'll reach it.",
-                    actionTitle: "Set goal",
+                    title: Strings.setAGoal,
+                    message: Strings.setAGoalMessage,
+                    actionTitle: Strings.setGoal,
                     action: { model.beginEditingGoal() }
                 )
             case .loading:
@@ -72,9 +72,9 @@ struct PopoverView: View {
             case .failure(let message):
                 EmptyStateView(
                     symbol: "exclamationmark.triangle",
-                    title: "Can't read your portfolio",
+                    title: Strings.cantReadPortfolio,
                     message: message,
-                    actionTitle: "Try again",
+                    actionTitle: Strings.tryAgain,
                     action: { model.refresh() },
                     tint: .orange
                 )
@@ -135,14 +135,14 @@ struct PortfolioFactsView: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            ForEach(report.summaryRows, id: \.label) { row in
+            ForEach(report.summaryRows, id: \.kind) { row in
                 HStack(spacing: 7) {
                     // Fixed width, and reserved even when a row has no symbol, so
                     // the labels stay in one column whatever the rows are.
-                    Image(systemName: symbol(for: row.label) ?? "circle")
+                    Image(systemName: symbol(for: row.kind) ?? "circle")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(iconTint(for: row.label))
-                        .opacity(symbol(for: row.label) == nil ? 0 : 1)
+                        .foregroundStyle(iconTint(for: row.kind))
+                        .opacity(symbol(for: row.kind) == nil ? 0 : 1)
                         .frame(width: 13)
 
                     Text(row.label)
@@ -151,37 +151,35 @@ struct PortfolioFactsView: View {
                     Spacer()
                     Text(row.value)
                         .font(Theme.numeric(11, weight: .medium))
-                        .foregroundStyle(tint(for: row.label))
+                        .foregroundStyle(tint(for: row.kind))
                 }
             }
         }
     }
 
     /// Symbols are chosen per row rather than carried in `Report`, which holds no
-    /// UI. `nil` for an unrecognised row: a future row keeps its alignment instead
-    /// of picking up a glyph that means nothing.
-    private func symbol(for label: String) -> String? {
-        switch label {
-        case "Portfolio": return "briefcase"
+    /// UI. Keyed off `kind` rather than the label, which is translated.
+    private func symbol(for kind: Report.SummaryRow.Kind) -> String? {
+        switch kind {
+        case .portfolio: return "briefcase"
         // The recurring deposit, not an amount — a euro glyph here would just
         // repeat the figure at the other end of the row.
-        case "Saving": return "repeat"
-        case "Past year":
+        case .saving: return "repeat"
+        case .pastYear:
             return (report.snapshot.oneYearGain ?? 0) >= 0
                 ? "chart.line.uptrend.xyaxis"
                 : "chart.line.downtrend.xyaxis"
-        default: return nil
         }
     }
 
-    /// Quiet by default. "Past year" takes its value's colour, so the glyph, the
-    /// direction of the line in it and the sign of the number all agree.
-    private func iconTint(for label: String) -> Color {
-        label == "Past year" ? tint(for: label) : .secondary.opacity(0.55)
+    /// Quiet by default. The past-year row takes its value's colour, so the glyph,
+    /// the direction of the line in it and the sign of the number all agree.
+    private func iconTint(for kind: Report.SummaryRow.Kind) -> Color {
+        kind == .pastYear ? tint(for: kind) : .secondary.opacity(0.55)
     }
 
-    private func tint(for label: String) -> Color {
-        guard label == "Past year", let gain = report.snapshot.oneYearGain else {
+    private func tint(for kind: Report.SummaryRow.Kind) -> Color {
+        guard kind == .pastYear, let gain = report.snapshot.oneYearGain else {
             return .primary.opacity(0.85)
         }
         return gain >= 0 ? Theme.accent : .red
@@ -228,7 +226,7 @@ struct LoadingView: View {
         HStack(spacing: 10) {
             ProgressView()
                 .controlSize(.small)
-            Text("Reading your portfolio…")
+            Text(Strings.readingPortfolio)
                 .font(Theme.body)
                 .foregroundStyle(.secondary)
         }
@@ -252,12 +250,12 @@ struct FooterView: View {
             // to the tooltip, where it answers the different question of whether the
             // app is still running.
             if let valued = model.valuationDate {
-                Text("Valued \(Format.valuationStamp(valued))")
+                Text(Strings.valued(Format.valuationStamp(valued)))
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
-                    .help(model.lastFetch.map { "Fetched \(Format.valuationStamp($0))" } ?? "")
+                    .help(model.lastFetch.map { Strings.fetched(Format.valuationStamp($0)) } ?? "")
             } else if let lastFetch = model.lastFetch {
-                Text("Updated \(lastFetch, format: .dateTime.hour().minute())")
+                Text(Strings.updated(Format.valuationStamp(lastFetch)))
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
             }
@@ -270,7 +268,7 @@ struct FooterView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 9))
                     .foregroundStyle(.orange)
-                    .help("Couldn't update: \(reason)")
+                    .help(Strings.couldNotUpdate(reason))
             }
 
             Spacer()
@@ -281,7 +279,7 @@ struct FooterView: View {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(FooterButtonStyle())
-            .help("Refresh now")
+            .help(Strings.refreshNow)
 
             Button {
                 model.beginEditingGoal()
@@ -289,19 +287,19 @@ struct FooterView: View {
                 Image(systemName: "target")
             }
             .buttonStyle(FooterButtonStyle())
-            .help("Set goal")
+            .help(Strings.setGoal)
 
             Menu {
-                Button("Set goal…") { model.beginEditingGoal() }
-                Button("Refresh now") { model.refresh() }
+                Button(Strings.setGoalEllipsis) { model.beginEditingGoal() }
+                Button(Strings.refreshNow) { model.refresh() }
                 Divider()
                 if LaunchAtLogin.isSupported {
-                    Button(LaunchAtLogin.isEnabled ? "✓ Launch at login" : "Launch at login") {
+                    Button(LaunchAtLogin.isEnabled ? "✓ \(Strings.launchAtLogin)" : Strings.launchAtLogin) {
                         try? LaunchAtLogin.toggle()
                     }
                 }
                 Divider()
-                Button("Quit Zielzeit", action: onQuit)
+                Button(Strings.quitZielzeit, action: onQuit)
             } label: {
                 Image(systemName: "ellipsis")
             }

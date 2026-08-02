@@ -25,7 +25,7 @@ struct MarketChipView: View {
         if let onCycle {
             Button(action: onCycle) { chip }
                 .buttonStyle(.plain)
-                .help("\(move.windowLabel) — click for another period")
+                .help(Strings.chipHelp(move.windowLabel))
         } else {
             chip
         }

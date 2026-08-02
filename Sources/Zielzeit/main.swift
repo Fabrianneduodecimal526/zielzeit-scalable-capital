@@ -13,6 +13,11 @@ import ZielzeitCore
 
 let arguments = CommandLine.arguments
 
+// The one place the language is chosen, and before any mode runs so `--once`,
+// the render harnesses and the app all speak the same one. `AppLanguage.current`
+// defaults to English on purpose: only the app has a device to ask.
+AppLanguage.current = .detected
+
 /// `--scale N`, shared by the two capture modes.
 let scaleArgument: Int? = arguments.firstIndex(of: "--scale")
     .flatMap { arguments.count > $0 + 1 ? Int(arguments[$0 + 1]) : nil }

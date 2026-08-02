@@ -72,7 +72,7 @@ struct ScenarioRow: View {
     @ViewBuilder
     private var value: some View {
         if scenario.annualRate == nil {
-            Text("no history")
+            Text(Strings.noHistory)
                 .font(Theme.caption)
                 .foregroundStyle(.tertiary)
         } else if let year {
@@ -81,7 +81,7 @@ struct ScenarioRow: View {
                 .foregroundStyle(isHeadline ? tint : .primary.opacity(0.8))
                 .contentTransition(.numericText())
         } else {
-            Text("never")
+            Text(Strings.never)
                 .font(Theme.caption)
                 .foregroundStyle(.tertiary)
         }

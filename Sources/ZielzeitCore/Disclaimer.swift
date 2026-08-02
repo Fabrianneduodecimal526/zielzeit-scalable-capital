@@ -11,50 +11,49 @@ import Foundation
 /// a plan that has none is worse than no caveat.
 public enum Disclaimer {
 
-    public static let headline = "Projections, not predictions"
+    public static var headline: String { Strings.disclaimerHeadline }
 
-    public static let notAdvice = "Not financial advice."
+    public static var notAdvice: String { Strings.notAdvice }
 
     public static func assumptions(for report: Report) -> [String] {
         var lines: [String] = []
 
         if report.realizedAnnualRate != nil {
-            lines.append("Assumes \(Format.percent(report.headlineRate)) every year, from one trailing year.")
+            lines.append(Strings.assumesRate(Format.percent(report.headlineRate)))
             // Only worth saying when it is a guess. With the measured flow the
             // contribution behind the pace is exact; without it the pace is off in
             // whichever direction the plan and any manual buying happen to pull.
             if report.snapshot.trailingContributions == nil {
-                lines.append("Pace assumes deposits ran at today's rate all year.")
+                lines.append(Strings.paceAssumesDeposits)
             }
         } else {
-            lines.append("Under a year of history — assumes \(Format.percent(Report.moderateRate)), not your own pace.")
+            lines.append(Strings.underAYearOfHistory(Format.percent(Report.moderateRate)))
         }
 
-        lines.append("Compounds smoothly. Real returns don't.")
+        lines.append(Strings.compoundsSmoothly)
 
         if report.snapshot.monthlySavings > 0 {
-            var line = "Assumes \(Format.euro(report.snapshot.monthlySavings))/mo"
-            if report.snapshot.dynamizationRate > 0 {
-                line += ", rising \(Format.percent(report.snapshot.dynamizationRate, decimals: 0))/yr"
-            }
-            line += ", never paused."
-            lines.append(line)
+            lines.append(Strings.assumesContribution(
+                Format.euro(report.snapshot.monthlySavings),
+                stepUp: report.snapshot.dynamizationRate > 0
+                    ? Format.percent(report.snapshot.dynamizationRate, decimals: 0)
+                    : nil
+            ))
         }
 
         if report.snapshot.dynamizationRate > 0 {
-            lines.append("Step-up date is guessed; Scalable doesn't publish it.")
+            lines.append(Strings.stepUpDateGuessed)
         }
 
         // Inflation stops being a caveat once the hero states the goal in today's
         // money — at that point the honest line names the assumption behind that
         // figure instead of apologising for its absence.
         if report.realGoalValue != nil {
-            lines.append(
-                "Before tax; today's money assumes "
-                    + "\(Format.percent(Projection.assumedInflation, decimals: 0)) inflation."
-            )
+            lines.append(Strings.beforeTaxWithInflation(
+                Format.percent(Projection.assumedInflation, decimals: 0)
+            ))
         } else {
-            lines.append("Before tax and inflation.")
+            lines.append(Strings.beforeTaxAndInflation)
         }
 
         return lines
