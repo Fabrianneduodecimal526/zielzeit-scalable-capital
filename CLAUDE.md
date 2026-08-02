@@ -216,12 +216,18 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - `make icon` — regenerate `Zielzeit.icns` from `AppIconArtwork` (`make app` depends on it)
 - `make open [STATE=…]` — launch with the popover already open, for a real screenshot
 - `make shots` — regenerate the README images in `docs/` (always against `Scripts/sc-demo`, never a
-  real account). **Scale is a correctness matter here, not a preference:** the README sets each image's
-  display width in HTML, so the source must carry at least twice that in pixels or it reads soft on
-  every Retina screen. The popover was shown at 380px from a 2× capture (688px = 1.8×), which is why
-  it looked blurry; it is `--scale 4` now against a 480px display width, and the menu bar item
-  `--scale 8` against 260px. Multiply, don't guess: check `sips -g pixelWidth` against the `width=` in
-  the README before shipping new images. **A single high-resolution PNG is the whole technique** — the
+  real account). **Every image's source width must be exactly twice its `width=` in the README**, and
+  "exactly" is the whole point rather than a minimum. A Retina viewer needs `2 × width=` device pixels:
+  hit that and the blit is 1:1 pixel-exact, while a 1× viewer halves it on a clean 2×2 box filter. Any
+  other figure resamples on a fractional ratio and reads soft *however much resolution you throw at
+  it* — a 1376px source at `width="480"` is 1.43:1 on Retina and visibly mushier than a 688px source at
+  `width="344"`, which is smaller and pixel-exact. That is the trap this went through twice: the
+  original blur was a 688px capture shown at 380px (1.81:1), and "fix" it by raising the scale to 4×
+  and it stays blurry at a different ratio. So `--scale 2` for the popover and setup shots (688px →
+  `width="344"`, which is also the popover's natural point size), `--scale 8` for the menu bar item
+  (596px → `width="298"`), and `width="495"` for the 1980px states sheet. Verify, don't assume: divide
+  `sips -g pixelWidth` by the `width=` and confirm both it and half of it are whole numbers.
+  **A single PNG at exactly 2× is the whole technique** — the
   `srcset` GitHub allows is only on `<source>` inside `<picture>`, and only the `prefers-color-scheme`
   form is documented, so density variants are not a route here.
 - `make test`, `make run`, `make install`, `make help`

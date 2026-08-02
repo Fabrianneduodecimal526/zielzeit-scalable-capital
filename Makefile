@@ -48,9 +48,9 @@ shots: ## Regenerate the README screenshots in docs/ from synthetic data
 	@# 1.8 device pixels per CSS pixel on a Retina screen and reads soft. 3× clears
 	@# Retina with room to spare; 4× only costs file size.
 	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 \
-		.build/debug/Zielzeit --shot docs/popover.png ready --dark --scale 4
+		.build/debug/Zielzeit --shot docs/popover.png ready --dark --scale 2
 	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 \
-		.build/debug/Zielzeit --shot docs/setup.png setup-access --dark --scale 4
+		.build/debug/Zielzeit --shot docs/setup.png setup-access --dark --scale 2
 	@.build/debug/Zielzeit --menubar docs/menubar.png --dark --scale 8
 	@.build/debug/Zielzeit --icons docs/menubar-states.png --dark >/dev/null
 	@rm -rf .build/readme-iconset
