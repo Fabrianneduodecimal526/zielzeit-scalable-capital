@@ -15,7 +15,12 @@ on:
     paths:
       - "site/**"
       - "docs/*.png"
+      - "Scripts/usage-badges"
       - ".github/workflows/pages.yml"
+  # Daily, because the README's "active" badge is a day-over-day delta and the
+  # site is what stores the samples: no deploy, no sample, no figure.
+  schedule:
+    - cron: "17 6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -41,9 +46,20 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir -p site/img
-          cp docs/icon.png docs/menubar.png docs/menubar-states.png \
+          # menubar-states.png is deliberately not copied: the site dropped the
+          # states strip, and docs/ still carries it for the README.
+          cp docs/icon.png docs/menubar.png \
              docs/popover.png docs/popover-de.png \
              docs/setup.png docs/setup-de.png site/img/
+
+      # The README's usage badges, served from the site as shields.io endpoints.
+      # Non-fatal on purpose: the badges are a nicety and the site is not, so a
+      # rate-limited API call must not stop the pages from publishing.
+      - name: Usage badges
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: Scripts/usage-badges
 
       # The page loads no fonts, scripts or trackers from anyone else, and the
       # footer says so. This fails the build if that ever stops being true.

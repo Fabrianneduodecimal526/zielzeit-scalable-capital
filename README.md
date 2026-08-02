@@ -18,6 +18,14 @@
 </p>
 
 <p align="center">
+  <!-- Counted by GitHub on the way out, never by the app: "active" is the daily
+       rise in appcast fetches, "downloads" the .dmg assets across all releases.
+       Both come from Scripts/usage-badges, published with the Pages site. -->
+  <a href="https://github.com/Mannafee/zielzeit-scalable-capital/releases"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmannafee.github.io%2Fzielzeit-scalable-capital%2Fbadge%2Factive.json" alt="Copies that checked for an update in the last day"></a>
+  <a href="https://github.com/Mannafee/zielzeit-scalable-capital/releases"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fmannafee.github.io%2Fzielzeit-scalable-capital%2Fbadge%2Fdownloads.json" alt="Total downloads"></a>
+</p>
+
+<p align="center">
   <a href="https://mannafee.github.io/zielzeit-scalable-capital/"><strong>zielzeit website ↗</strong></a>
 </p>
 
