@@ -76,7 +76,7 @@ The same popover, in German:
 **[⬇︎ Download the latest release](https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest).** It is a
 universal build, so it runs on Apple silicon and Intel. No Xcode, no Terminal.
 
-1. Download `Zielzeit.dmg`, open it, and drag Zielzeit onto the Applications folder.
+1. Download the `.dmg`, open it, and drag Zielzeit onto the Applications folder.
 2. Open Zielzeit from Applications. The first launch will be blocked. See below.
 3. Look for the progress ring in your menu bar.
 

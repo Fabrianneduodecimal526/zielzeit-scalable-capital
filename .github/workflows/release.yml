@@ -50,7 +50,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          # Published, not drafted. v1.1 shipped with an empty asset list because
+          # the draft was left sitting and a second release was created on the
+          # same tag from the GitHub UI — which is a new release, not an edit of
+          # the draft, so the artifacts stayed behind on the draft. Publishing
+          # here means there is no draft to strand. The gate is above: the tests
+          # and the universal-binary check both have to pass before this step is
+          # reached at all.
+          draft: false
           files: |
             dist/*.zip
             dist/*.dmg
