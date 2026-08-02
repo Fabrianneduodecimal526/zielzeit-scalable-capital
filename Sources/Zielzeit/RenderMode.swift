@@ -1,0 +1,474 @@
+import AppKit
+import SwiftUI
+import ZielzeitCore
+
+/// `zielzeit --render <path> [state] [--dark]`: rasterize the popover to a PNG.
+///
+/// A popover cannot be opened from a script without accessibility permission, so
+/// this is how the UI gets inspected during development — render it, then look at
+/// the image. It also makes it cheap to check both appearances.
+@MainActor
+enum RenderMode {
+
+    static func run(
+        path: String,
+        stateName: String,
+        dark: Bool,
+        provider: PortfolioProviding = ScalableClient(),
+        goalStore: GoalStore = GoalStore()
+    ) -> Int32 {
+        // SwiftUI needs an initialized application before it will rasterize, but
+        // must not take over the process, so no `run()` and no activation.
+        let app = NSApplication.shared
+        app.setActivationPolicy(.prohibited)
+
+        let model: AppModel
+        switch DevState.model(named: stateName, provider: provider, goalStore: goalStore) {
+        case .success(let built):
+            model = built
+        case .failure(let failure):
+            complain(failure.message)
+            return 1
+        }
+
+        let view = PopoverView(model: model, onQuit: {})
+            .environment(\.colorScheme, dark ? .dark : .light)
+            .background(dark ? Color(white: 0.13) : Color(white: 0.97))
+
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = 2
+
+        // Semantic colours resolve against the current drawing appearance, so
+        // rasterizing has to happen inside the requested one — otherwise both
+        // renders come out in whatever the system is set to.
+        let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        var rendered: NSImage?
+        if let appearance {
+            appearance.performAsCurrentDrawingAppearance { rendered = renderer.nsImage }
+        } else {
+            rendered = renderer.nsImage
+        }
+
+        guard let image = rendered,
+              let tiff = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let png = bitmap.representation(using: .png, properties: [:]) else {
+            complain("Could not rasterize the view.")
+            return 1
+        }
+
+        do {
+            try png.write(to: URL(fileURLWithPath: path))
+        } catch {
+            complain("Could not write \(path): \(error.localizedDescription)")
+            return 1
+        }
+
+        print("Rendered \(stateName) (\(dark ? "dark" : "light")) → \(path)  \(Int(image.size.width))×\(Int(image.size.height))pt")
+        return 0
+    }
+
+    /// `zielzeit --shot <path> [state] [--dark] [--scale N]`: rasterize the popover
+    /// *including* its AppKit-backed controls.
+    ///
+    /// Why this exists alongside `run(path:…)`: `ImageRenderer` cannot draw
+    /// NSView-backed controls, so the two sliders and the footer menu come out of
+    /// `--render` as flat coloured blocks. Hosting the same view in a real (offscreen)
+    /// window and asking AppKit to cache its display draws them properly.
+    ///
+    /// The scale is not the window's to give: an offscreen window inherits the
+    /// backing scale of the display it is on, so on a 1× monitor `cacheDisplay`
+    /// would produce a 1× image. Allocating the bitmap at `scale ×` the pixel count
+    /// while leaving its `size` in points makes AppKit draw magnified into it, which
+    /// is how a Retina asset comes out of a non-Retina Mac.
+    ///
+    /// One known infidelity, and it is not worth chasing again: **prominent buttons
+    /// come out grey**, not in the accent colour, because `cacheDisplay` draws them
+    /// unemphasized. Making the window key and activating the app (`.accessory` plus
+    /// `activate(ignoringOtherApps:)`) were both tried and changed nothing. Only the
+    /// setup screen has one, so `make open` remains the way to see that button in its
+    /// real colour.
+    static func shot(
+        path: String,
+        stateName: String,
+        dark: Bool,
+        scale: Int = 2,
+        provider: PortfolioProviding = ScalableClient(),
+        goalStore: GoalStore = GoalStore()
+    ) -> Int32 {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.prohibited)
+
+        let model: AppModel
+        switch DevState.model(named: stateName, provider: provider, goalStore: goalStore) {
+        case .success(let built):
+            model = built
+        case .failure(let failure):
+            complain(failure.message)
+            return 1
+        }
+
+        // An opaque backdrop, as in `run(path:…)`: the popover's own material is
+        // translucent and NSPopover supplies what sits behind it, so capturing the
+        // view on its own composites it against nothing and everything washes grey.
+        let hosting = NSHostingController(
+            rootView: PopoverView(model: model, onQuit: {})
+                .background(dark ? Color(white: 0.13) : Color(white: 0.97))
+        )
+        // The same option the popover itself needs, for the same reason: without it
+        // the hosting view keeps a default size and the content is clipped.
+        hosting.sizingOptions = [.preferredContentSize]
+
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: hosting.view.fittingSize),
+            styleMask: [.borderless],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentViewController = hosting
+        window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        window.backgroundColor = .clear
+        // Offscreen, so nothing flashes on the user's display, but ordered in —
+        // AppKit will not lay out or draw a window that was never shown.
+        window.setFrameOrigin(NSPoint(x: -10_000, y: -10_000))
+        window.makeKeyAndOrderFront(nil)
+
+        // Let layout settle. SwiftUI resolves sizes and Charts build their scales on
+        // subsequent runloop turns, so capturing immediately catches a half-laid-out
+        // view — reliably visible as a chart with no curves in it.
+        let deadline = Date().addingTimeInterval(1.5)
+        while Date() < deadline {
+            RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
+        }
+
+        let view = hosting.view
+        view.layoutSubtreeIfNeeded()
+        let bounds = view.bounds
+
+        guard bounds.width > 1, bounds.height > 1 else {
+            complain("The hosted view has no size; nothing to capture.")
+            return 1
+        }
+
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(bounds.width) * scale,
+            pixelsHigh: Int(bounds.height) * scale,
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else {
+            complain("Could not allocate a \(scale)× bitmap.")
+            return 1
+        }
+        // Point size against a larger pixel count is what asks for magnification.
+        rep.size = bounds.size
+
+        // Semantic colours resolve against the current drawing appearance, exactly
+        // as in `run(path:…)`.
+        let appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        appearance?.performAsCurrentDrawingAppearance {
+            view.cacheDisplay(in: bounds, to: rep)
+        }
+
+        window.orderOut(nil)
+
+        guard let png = rep.representation(using: .png, properties: [:]) else {
+            complain("Could not encode the capture.")
+            return 1
+        }
+        do {
+            try png.write(to: URL(fileURLWithPath: path))
+        } catch {
+            complain("Could not write \(path): \(error.localizedDescription)")
+            return 1
+        }
+
+        print("Shot \(stateName) (\(dark ? "dark" : "light")) → \(path)  \(rep.pixelsWide)×\(rep.pixelsHigh)px @\(scale)×")
+        return 0
+    }
+
+    /// `zielzeit --menubar <path> [--dark] [--scale N]`: draw the status item the way
+    /// it appears in the menu bar — ring, caret and year — on a menu bar backdrop.
+    ///
+    /// A screenshot of the real menu bar is 20pt tall and unusable in documentation
+    /// on a non-Retina display. This composes the same `StatusItemIcon` image with
+    /// the same title AppKit would draw beside it, at whatever scale is asked for.
+    static func menuBar(
+        path: String,
+        dark: Bool,
+        scale: Int = 4,
+        progress: Double = 0.17,
+        direction: MoveDirection? = .up,
+        year: String = "2033"
+    ) -> Int32 {
+        _ = NSApplication.shared
+
+        let icon = StatusItemIcon.ring(
+            progress: progress, direction: direction, style: .brand, isDarkBar: dark
+        )
+        // The menu bar's own metrics: 22pt tall, a few points of padding either side
+        // and a small gap between the image and the title.
+        let barHeight: CGFloat = 22
+        let padding: CGFloat = 6
+        let gap: CGFloat = 3
+        let font = NSFont.menuBarFont(ofSize: 0)
+        let ink = dark ? NSColor.white : NSColor.black
+        let title = NSAttributedString(string: year, attributes: [
+            .font: font, .foregroundColor: ink,
+        ])
+        let titleSize = title.size()
+        let width = padding + icon.size.width + gap + titleSize.width + padding
+
+        let factor = CGFloat(scale)
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(width * factor),
+            pixelsHigh: Int(barHeight * factor),
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else {
+            complain("Could not allocate a \(scale)× bitmap.")
+            return 1
+        }
+        rep.size = NSSize(width: width, height: barHeight)
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        NSGraphicsContext.current?.imageInterpolation = .high
+
+        (dark ? NSColor(white: 0.17, alpha: 1) : NSColor(white: 0.93, alpha: 1)).setFill()
+        NSRect(x: 0, y: 0, width: width, height: barHeight).fill()
+
+        icon.draw(in: NSRect(
+            x: padding,
+            y: (barHeight - icon.size.height) / 2,
+            width: icon.size.width,
+            height: icon.size.height
+        ))
+        title.draw(at: NSPoint(
+            x: padding + icon.size.width + gap,
+            y: (barHeight - titleSize.height) / 2
+        ))
+
+        NSGraphicsContext.restoreGraphicsState()
+
+        guard let png = rep.representation(using: .png, properties: [:]) else {
+            complain("Could not encode the menu bar image.")
+            return 1
+        }
+        do {
+            try png.write(to: URL(fileURLWithPath: path))
+        } catch {
+            complain("Could not write \(path): \(error.localizedDescription)")
+            return 1
+        }
+        print("Rendered menu bar item (\(dark ? "dark" : "light")) → \(path)  \(rep.pixelsWide)×\(rep.pixelsHigh)px @\(scale)×")
+        return 0
+    }
+
+    /// `zielzeit --icons <path>`: draw the menu bar glyph at a range of progress
+    /// values, magnified, so the icon design can be judged.
+    ///
+    /// A 15pt template image is too small to evaluate in a screenshot of the real
+    /// menu bar, and the states either side of the current one (empty, complete,
+    /// error) never appear on demand.
+    static func icons(path: String, dark: Bool, style: StatusItemIcon.Style = .brand) -> Int32 {
+        _ = NSApplication.shared
+
+        func ring(_ progress: Double, _ direction: MoveDirection? = nil) -> NSImage {
+            StatusItemIcon.ring(progress: progress, direction: direction, style: style, isDarkBar: dark)
+        }
+
+        let samples: [(String, NSImage)] = [
+            ("0%", ring(0)),
+            ("2%", ring(0.02)),
+            ("12%", ring(0.12)),
+            ("24%", ring(0.24)),
+            ("75%", ring(0.75)),
+            ("100%", ring(1)),
+            // The caret is judged here for the same reason the digits are: at 20pt
+            // in a real menu bar, magnification blur makes a clean glyph look like
+            // it collides with the ring.
+            ("12% up", ring(0.12, .up)),
+            ("12% down", ring(0.12, .down)),
+            ("12% flat", ring(0.12, .flat)),
+            ("unset", StatusItemIcon.unset()),
+            ("error", StatusItemIcon.warning()),
+        ]
+
+        let scale: CGFloat = 6
+        // Wide enough for the ring plus its caret, so the two carets do not spill
+        // into the neighbouring cell.
+        let cell = CGSize(width: 30 * scale, height: 26 * scale)
+        let canvas = NSSize(width: cell.width * CGFloat(samples.count), height: cell.height + 22)
+
+        let output = NSImage(size: canvas)
+        output.lockFocus()
+
+        // Template images are tinted by their context, so paint the same
+        // backdrop the menu bar would provide.
+        (dark ? NSColor(white: 0.15, alpha: 1) : NSColor(white: 0.92, alpha: 1)).setFill()
+        NSRect(origin: .zero, size: canvas).fill()
+
+        let ink = dark ? NSColor.white : NSColor.black
+
+        for (index, sample) in samples.enumerated() {
+            let origin = CGPoint(x: cell.width * CGFloat(index), y: 22)
+            let box = NSRect(
+                x: origin.x + (cell.width - sample.1.size.width * scale) / 2,
+                y: origin.y + (cell.height - sample.1.size.height * scale) / 2,
+                width: sample.1.size.width * scale,
+                height: sample.1.size.height * scale
+            )
+
+            // Tint inside a transparent image, then composite. Tinting directly
+            // onto the opaque backdrop would lose the glyph's alpha (sourceAtop
+            // keys off destination alpha, which is 1 everywhere) and fill the
+            // whole cell.
+            if sample.1.isTemplate {
+                tinted(sample.1, with: ink, size: box.size).draw(in: box)
+            } else {
+                // Colour images are drawn as-is; tinting would flatten them.
+                sample.1.draw(in: box)
+            }
+
+            let label = NSAttributedString(
+                string: sample.0,
+                attributes: [
+                    .font: NSFont.systemFont(ofSize: 11),
+                    .foregroundColor: ink.withAlphaComponent(0.7),
+                ]
+            )
+            label.draw(at: NSPoint(x: origin.x + 8, y: 4))
+        }
+
+        output.unlockFocus()
+
+        guard let tiff = output.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let png = bitmap.representation(using: .png, properties: [:]) else {
+            complain("Could not rasterize the icons.")
+            return 1
+        }
+        do {
+            try png.write(to: URL(fileURLWithPath: path))
+        } catch {
+            complain("Could not write \(path): \(error.localizedDescription)")
+            return 1
+        }
+        print("Rendered menu bar icons (\(dark ? "dark" : "light")) → \(path)")
+        // Eyeballing a 6× magnification is unreliable for a 20pt glyph, so state
+        // the fit numerically: ratio ≥ 1 means the digits touch the ring.
+        for percent in [0, 2, 12, 40, 75, 100] {
+            let fit = StatusItemIcon.innerFill(percent: percent)
+            print(String(
+                format: "  %4d%%  text %@  width %.2fpt / %.2fpt available  ratio %.2f",
+                percent, fit.text, fit.width, fit.available, fit.width / fit.available
+            ))
+        }
+        return 0
+    }
+
+    /// `zielzeit --appicon <dir>`: write a complete `.iconset` for `iconutil`,
+    /// plus a `preview.png` showing the icon at the sizes that matter.
+    static func appIcon(directory: String) -> Int32 {
+        _ = NSApplication.shared
+
+        let base = URL(fileURLWithPath: directory)
+        do {
+            try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        } catch {
+            complain("Could not create \(directory): \(error.localizedDescription)")
+            return 1
+        }
+
+        for size in AppIconArtwork.iconSetSizes {
+            let pixels = size.points * size.scale
+            let suffix = size.scale == 2 ? "@2x" : ""
+            let name = "icon_\(size.points)x\(size.points)\(suffix).png"
+            guard write(AppIconArtwork.image(pixels: pixels), to: base.appendingPathComponent(name)) else {
+                return 1
+            }
+        }
+
+        // A side-by-side sheet, because an icon has to work at 16pt as well as
+        // at 512 and only a comparison shows whether it does.
+        guard write(previewSheet(), to: base.appendingPathComponent("preview.png")) else { return 1 }
+
+        print("Wrote \(AppIconArtwork.iconSetSizes.count) sizes + preview.png to \(directory)")
+        return 0
+    }
+
+    /// The icon at several sizes on one canvas, each drawn at its true pixel size
+    /// then magnified, so small-size legibility can be judged honestly.
+    private static func previewSheet() -> NSImage {
+        let samples = [512, 128, 64, 32, 16]
+        let scale: CGFloat = 1
+        let cellHeight: CGFloat = 512
+        let gap: CGFloat = 24
+        let width = samples.reduce(0) { $0 + CGFloat($1) * scale + gap } + gap
+        let canvas = NSSize(width: width, height: cellHeight + 40)
+
+        let sheet = NSImage(size: canvas)
+        sheet.lockFocus()
+        NSColor(white: 0.85, alpha: 1).setFill()
+        NSRect(origin: .zero, size: canvas).fill()
+
+        var x = gap
+        for pixels in samples {
+            let drawn = CGFloat(pixels) * scale
+            let box = NSRect(x: x, y: canvas.height - 20 - drawn, width: drawn, height: drawn)
+            AppIconArtwork.image(pixels: pixels).draw(in: box)
+
+            let label = NSAttributedString(string: "\(pixels)px", attributes: [
+                .font: NSFont.systemFont(ofSize: 12),
+                .foregroundColor: NSColor.black.withAlphaComponent(0.7),
+            ])
+            label.draw(at: NSPoint(x: x, y: 6))
+            x += drawn + gap
+        }
+        sheet.unlockFocus()
+        return sheet
+    }
+
+    private static func write(_ image: NSImage, to url: URL) -> Bool {
+        guard let tiff = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiff),
+              let png = bitmap.representation(using: .png, properties: [:]) else {
+            complain("Could not rasterize \(url.lastPathComponent).")
+            return false
+        }
+        do {
+            try png.write(to: url)
+            return true
+        } catch {
+            complain("Could not write \(url.path): \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    /// Applies a flat colour to a template image, the way the menu bar does.
+    private static func tinted(_ image: NSImage, with color: NSColor, size: NSSize) -> NSImage {
+        let output = NSImage(size: size)
+        output.lockFocus()
+        image.draw(in: NSRect(origin: .zero, size: size))
+        color.set()
+        NSRect(origin: .zero, size: size).fill(using: .sourceAtop)
+        output.unlockFocus()
+        return output
+    }
+
+    private static func complain(_ message: String) {
+        FileHandle.standardError.write(Data((message + "\n").utf8))
+    }
+}

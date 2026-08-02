@@ -1,0 +1,78 @@
+#!/bin/sh
+# A stand-in for the Scalable CLI that answers the read-only commands Zielzeit
+# uses with **synthetic** data.
+#
+# Two jobs:
+#   1. Working on the UI without a broker account, or without disturbing a live
+#      session:  ZIELZEIT_SC_BIN=$PWD/Scripts/sc-demo ZIELZEIT_GOAL=250000 make once
+#   2. Rendering the README screenshots, so no real portfolio figures are ever
+#      published:  make shots
+#
+# The figures are invented but internally consistent — a €42 350 portfolio with
+# a €500/mo plan and a 19.7% trailing pace — so the projections it produces look
+# like a real account rather than obvious filler. Keep them that way if you edit
+# this: a screenshot showing €1 234,56 everywhere teaches a reader nothing.
+
+NOW=$(date -u +%Y-%m-%dT%H:%M:%S.000Z)
+
+case "$1 $2" in
+"broker overview")
+cat <<JSON
+{"ok":true,"command":"broker overview","data":{"result":{
+ "valuation":{"total":42350.18},
+ "timestamps":{"valuation_timestamp_utc":"$NOW"},
+ "performance":[
+  {"timeframe":"INTRADAY","simpleAbsoluteReturn":62.41,"performance":0},
+  {"timeframe":"TWO_DAYS","simpleAbsoluteReturn":88.02,"performance":0},
+  {"timeframe":"ONE_WEEK","simpleAbsoluteReturn":214.30,"performance":0},
+  {"timeframe":"ONE_MONTH","simpleAbsoluteReturn":-318.94,"performance":0},
+  {"timeframe":"THREE_MONTHS","simpleAbsoluteReturn":1240.55,"performance":0},
+  {"timeframe":"SIX_MONTHS","simpleAbsoluteReturn":2980.10,"performance":0},
+  {"timeframe":"ONE_YEAR","simpleAbsoluteReturn":6480.72,"performance":0},
+  {"timeframe":"MAX","simpleAbsoluteReturn":9120.44,"performance":0}]}}}
+JSON
+;;
+
+"broker savings-plans")
+cat <<'JSON'
+{"ok":true,"command":"broker savings-plans","data":{"result":{
+ "total_savings_plan_amount":500,
+ "count":2,
+ "items":[{"amount":350,"dynamization_rate":5},{"amount":150,"dynamization_rate":5}]}}}
+JSON
+;;
+
+"broker transactions")
+# One page, empty cursor — the CLI signals "no more pages" both ways, and this
+# exercises the empty-string case.
+cat <<'JSON'
+{"ok":true,"command":"broker transactions","data":{"result":{"cursor":"","items":[
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":500,"cash_transaction_type":"DEPOSIT"},
+ {"amount":-1250,"cash_transaction_type":"NON_TRADE_SECURITY_TRANSACTION"},
+ {"amount":12.40,"cash_transaction_type":"INTEREST"}]}}}
+JSON
+;;
+
+"installation-code "*|"installation-code")
+cat <<'JSON'
+{"ok":true,"command":"installation-code","data":{"display_code":"DEMO-1234-5678-ABCD","installation_code":"DEMO12345678ABCD"}}
+JSON
+;;
+
+*)
+cat <<'JSON'
+{"ok":true,"command":"whoami","data":{"result":{"personOverview":{"personalDetails":{"firstName":"Alex"}}}}}
+JSON
+;;
+esac
