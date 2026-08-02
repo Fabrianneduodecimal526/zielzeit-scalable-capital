@@ -9,7 +9,7 @@ accurate.
 ```sh
 git clone https://github.com/Mannafee/zielzeit-scalable-capital.git
 cd zielzeit-scalable-capital
-make test     # 245 tests, about 5 seconds. Start here.
+make test     # 251 tests, about 5 seconds. Start here.
 make once     # print the report as text (needs a connected CLI, or use the stub below)
 ```
 
@@ -66,7 +66,7 @@ Sources/Zielzeit/              the app: AppKit and SwiftUI, no arithmetic
   RenderMode.swift               --render, --icons, --appicon
   DevState.swift                 named states for both harnesses
 
-Tests/ZielzeitCoreTests/       245 tests, including decoding against payloads
+Tests/ZielzeitCoreTests/       251 tests, including decoding against payloads
                                shaped from real CLI responses (never real data)
 ```
 
@@ -253,7 +253,7 @@ Two things to know:
 ## Submitting
 
 1. Branch off `main`.
-2. `make test` must pass, all 245 of them.
+2. `make test` must pass, all 251 of them.
 3. If you changed UI, attach a `make ui` or `make open` screenshot to the PR.
 4. Keep commit messages descriptive of the *why*; the codebase's comments are written that way too.
 5. Open a PR against `main` describing what changed and how you verified it.

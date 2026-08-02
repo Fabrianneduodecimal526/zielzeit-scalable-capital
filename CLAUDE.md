@@ -87,7 +87,7 @@ no `import AppKit`/`SwiftUI` in `ZielzeitCore`, no math in the view layer.
   `ScenarioListView`/`WhatIfSliderView`/`MarketChipView`/`GoalEditorView`/`SetupView`/`Theme`
   (SwiftUI), `ViewState`, `LaunchAtLogin`, `StatusItemIcon` (menu bar ring), `AppIconArtwork`
   (app icon), `TextMode`, `RenderMode`, `DevState`
-- `Tests/ZielzeitCoreTests/`: 245 tests covering the math, curves, view model, amount parsing, and
+- `Tests/ZielzeitCoreTests/`: 251 tests covering the math, curves, view model, amount parsing, and
   decoding against payloads *shaped* from real CLI responses. **Shaped, not captured: no fixture may
   carry real account data.** No real balance, contribution, installation code or ISIN. The repo is
   public, and the CI hygiene job fails the build on anything matching those shapes. Keep the
@@ -237,7 +237,7 @@ the device.**
   silently renders keys. A Swift table cannot half-load, and `--once`, the tests and the app read
   from exactly one place.
 - **`AppLanguage.current` defaults to English and only `main` sets it**, from `.detected`. That
-  direction is what keeps the 229 English test assertions deterministic without every test file
+  direction is what keeps the English test assertions deterministic without every test file
   pinning a language, and only the app has a device to ask. `LocalizationTests` sets it and restores
   it in a `defer`, since it is process-wide.
 - `ZIELZEIT_LANG=de` is the only way to review the German layout from a Mac set to English, so

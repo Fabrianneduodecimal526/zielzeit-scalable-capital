@@ -232,7 +232,7 @@ targets, the UI harnesses, and how to exercise every state without touching a re
 The short version:
 
 ```sh
-make test     # 245 unit tests, all in ZielzeitCore
+make test     # 251 unit tests, all in ZielzeitCore
 make once     # print the report as text, the fastest check of the numbers
 make ui       # rasterize the popover, light and dark
 make help     # every target

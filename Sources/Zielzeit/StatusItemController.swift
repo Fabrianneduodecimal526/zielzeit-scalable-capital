@@ -55,6 +55,7 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
         observeTitle()
         observeAppearance()
         observeWake()
+        observeDeactivation()
 
         // A model handed in already carrying state (development `--open`) must
         // not have it overwritten by a fetch.
@@ -139,6 +140,35 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
         ) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 Task { @MainActor in self?.model.refresh() }
+            }
+        }
+    }
+
+    /// Closes the popover when the app loses focus.
+    ///
+    /// `.transient` is supposed to do this by itself, but `togglePopover` has to
+    /// activate the app and make the popover's window key before the goal field
+    /// will accept typing, and a keyed popover window in an accessory app no
+    /// longer gets dismissed by AppKit's own outside-click tracking: clicking
+    /// another app or the desktop only deactivates Zielzeit and the popover stays
+    /// up. Remove this and the popover becomes impossible to dismiss except by
+    /// clicking the status item again.
+    ///
+    /// `didResignActive` and not the window's `didResignKey`, because the footer
+    /// menu and the right-click menu take key away from the popover without the
+    /// reader having clicked outside anything.
+    private func observeDeactivation() {
+        NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, let popover = self.popover, popover.isShown else { return }
+                // A state forced by `--open` is there to be screenshotted, and
+                // `screencapture` deactivates the app to take the shot.
+                guard !self.model.isPinned else { return }
+                popover.performClose(nil)
             }
         }
     }
