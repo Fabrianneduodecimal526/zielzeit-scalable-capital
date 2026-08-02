@@ -28,7 +28,7 @@ public enum ScalableError: LocalizedError, Equatable {
 
 /// Reads portfolio data from the official Scalable CLI.
 ///
-/// Strictly read-only: the only commands this type can run are the four listed
+/// Strictly read-only: the only commands this type can run are the five listed
 /// in `Command`. There is no code path to a trade or any other write command,
 /// and none to `login` either — that is the user's to run.
 public struct ScalableClient: PortfolioProviding, SetupProbing {
