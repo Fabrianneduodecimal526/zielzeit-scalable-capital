@@ -20,22 +20,25 @@ struct GoalEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                SectionLabel(text: "Your goal")
-                Text("What are you aiming for?")
+                SectionLabel(text: Strings.yourGoal)
+                Text(Strings.whatAreYouAimingFor)
                     .font(.system(size: 15, weight: .semibold))
             }
 
             HStack(spacing: 8) {
                 HStack(spacing: 4) {
-                    Text("€")
-                        .font(Theme.numeric(16, weight: .medium))
-                        .foregroundStyle(.secondary)
+                    // The symbol sits where the language puts it, as it does in
+                    // every amount the app prints — leading in English, trailing
+                    // in German.
+                    if AppLanguage.current.currencySymbolLeads { currencySymbol }
 
                     TextField("100000", text: $text)
                         .textFieldStyle(.plain)
                         .font(Theme.numeric(18, weight: .semibold))
                         .focused($isFocused)
                         .onSubmit(save)
+
+                    if !AppLanguage.current.currencySymbolLeads { currencySymbol }
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 7)
@@ -45,12 +48,12 @@ struct GoalEditorView: View {
                         .stroke(isValid ? Theme.accent.opacity(0.5) : Color.clear, lineWidth: 1)
                 }
 
-                Button("Save", action: save)
+                Button(Strings.save, action: save)
                     .buttonStyle(.borderedProminent)
                     .tint(Theme.accent)
                     .disabled(!isValid)
 
-                Button("Cancel", action: onCancel)
+                Button(Strings.cancel, action: onCancel)
                     .buttonStyle(.plain)
                     .font(Theme.caption)
                     .foregroundStyle(.secondary)
@@ -71,10 +74,16 @@ struct GoalEditorView: View {
         }
     }
 
+    private var currencySymbol: some View {
+        Text("€")
+            .font(Theme.numeric(16, weight: .medium))
+            .foregroundStyle(.secondary)
+    }
+
     private var hint: String {
-        if text.isEmpty { return "Try 100000, 100.000 or 100k." }
-        guard let parsed else { return "That doesn't look like an amount." }
-        return "Aiming for \(Format.euro(parsed))."
+        if text.isEmpty { return Strings.goalHintEmpty }
+        guard let parsed else { return Strings.goalHintInvalid }
+        return Strings.goalHintValid(Format.euro(parsed))
     }
 
     private func save() {

@@ -36,7 +36,7 @@ struct TargetYearSliderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                SectionLabel(text: "Reach by")
+                SectionLabel(text: Strings.reachBy)
                 Spacer()
                 amount
             }
@@ -56,7 +56,7 @@ struct TargetYearSliderView: View {
                 // December, so at the projected year itself the figure comes out
                 // *below* what is saved now — right, but it reads as a mistake
                 // unless the extra months are named.
-                Text("end of \(String(year))")
+                Text(Strings.endOf(year))
                     .font(Theme.numeric(10, weight: .bold))
                     .foregroundStyle(Theme.color(forScenario: report.headlineLabel))
                     .contentTransition(.numericText())
@@ -79,11 +79,11 @@ struct TargetYearSliderView: View {
             if required <= 0 {
                 // A real answer rather than a blank: far enough out, compounding
                 // clears the goal on its own.
-                Text("no savings needed")
+                Text(Strings.noSavingsNeeded)
                     .font(Theme.numeric(11, weight: .medium))
                     .foregroundStyle(.secondary)
             } else {
-                Text("\(Format.euro(required))/mo")
+                Text("\(Format.euro(required))\(Strings.perMonth)")
                     .font(Theme.numeric(11, weight: .semibold))
                     .foregroundStyle(Theme.color(forScenario: report.headlineLabel))
                     .contentTransition(.numericText())
@@ -102,13 +102,13 @@ struct TargetYearSliderView: View {
                 .font(.system(size: 8, weight: .bold))
             Text(
                 delta > 0
-                    ? "\(Format.euro(delta))/mo more than now"
-                    : "\(Format.euro(-delta))/mo less than now"
+                    ? Strings.morePerMonthThanNow(Format.euro(delta))
+                    : Strings.lessPerMonthThanNow(Format.euro(-delta))
             )
             // The step-up is why a smaller starting amount can still get there,
             // so naming it here stops the figure reading as a mistake.
             if report.snapshot.dynamizationRate > 0 {
-                Text("· to start")
+                Text(Strings.toStart)
                     .foregroundStyle(.tertiary)
             }
         }

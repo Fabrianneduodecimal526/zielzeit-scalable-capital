@@ -40,10 +40,10 @@ struct SetupView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
-            SectionLabel(text: "Connect your portfolio")
-            Text(state == .cliMissing ? "Three steps to connect" : "Almost there")
+            SectionLabel(text: Strings.connectYourPortfolio)
+            Text(state == .cliMissing ? Strings.threeStepsToConnect : Strings.almostThere)
                 .font(.system(size: 15, weight: .semibold))
-            Text("Zielzeit reads your portfolio through Scalable Capital's official CLI, which is in beta — so it has to allowlist your Mac first.")
+            Text(Strings.setupIntro)
                 .font(Theme.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -55,14 +55,14 @@ struct SetupView: View {
     private func installStep(number: Int, isDone: Bool) -> some View {
         SetupStep(
             number: number,
-            title: "Install the Scalable CLI",
+            title: Strings.installTheCLI,
             isDone: isDone,
             isEnabled: true
         ) {
             if !isDone {
                 VStack(alignment: .leading, spacing: 6) {
                     CopyableCommand(command: AccessRequest.installCommand)
-                    Button("Installation instructions") {
+                    Button(Strings.installationInstructions) {
                         NSWorkspace.shared.open(AccessRequest.repositoryURL)
                     }
                     .buttonStyle(.link)
@@ -75,19 +75,19 @@ struct SetupView: View {
     private func accessStep(number: Int, code: String?, hasRequested: Bool, isEnabled: Bool) -> some View {
         SetupStep(
             number: number,
-            title: hasRequested ? "Access requested" : "Request beta access",
+            title: hasRequested ? Strings.accessRequested : Strings.requestBetaAccess,
             isDone: hasRequested,
             isEnabled: isEnabled
         ) {
             if isEnabled {
                 VStack(alignment: .leading, spacing: 7) {
                     if hasRequested {
-                        Text("Scalable Capital will reply once your Mac is allowlisted. Then sign in below.")
+                        Text(Strings.willReplyOnceAllowlisted)
                             .font(Theme.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     } else {
-                        Text("Sends your installation code to \(AccessRequest.emailAddress).")
+                        Text(Strings.sendsYourCodeTo(AccessRequest.emailAddress))
                             .font(Theme.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -117,7 +117,7 @@ struct SetupView: View {
                                 .padding(.vertical, 3)
                                 .background(.quinary, in: RoundedRectangle(cornerRadius: 5))
 
-                            Button(hasRequested ? "Send again" : "Request access") {
+                            Button(hasRequested ? Strings.sendAgain : Strings.requestAccess) {
                                 if let url = AccessRequest.mailtoURL(installationCode: code) {
                                     NSWorkspace.shared.open(url)
                                 }
@@ -128,7 +128,7 @@ struct SetupView: View {
                             .controlSize(.small)
                         }
                     } else {
-                        Text("Couldn't read an installation code from the CLI.")
+                        Text(Strings.noInstallationCode)
                             .font(Theme.caption)
                             .foregroundStyle(.orange)
                     }
@@ -140,13 +140,13 @@ struct SetupView: View {
     private func signInStep(number: Int, isEnabled: Bool) -> some View {
         SetupStep(
             number: number,
-            title: "Sign in",
+            title: Strings.signIn,
             isDone: false,
             isEnabled: isEnabled
         ) {
             if isEnabled {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Run this yourself in Terminal — Zielzeit never handles your credentials. The flag keeps the session read-only.")
+                    Text(Strings.signInExplanation)
                         .font(Theme.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -162,7 +162,7 @@ struct SetupView: View {
         } label: {
             HStack(spacing: 4) {
                 Image(systemName: "arrow.clockwise")
-                Text("Check again")
+                Text(Strings.checkAgain)
             }
             .font(Theme.caption.weight(.medium))
         }
@@ -250,14 +250,14 @@ struct CopyableCommand: View {
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(didCopy ? Theme.accent : .secondary)
-                .help("Copy")
+                .help(Strings.copy)
             }
             .padding(.horizontal, 7)
             .padding(.vertical, 5)
             .background(.quinary, in: RoundedRectangle(cornerRadius: 5))
 
             if opensTerminal {
-                Button("Open in Terminal") {
+                Button(Strings.openInTerminal) {
                     Terminal.open(typing: command)
                 }
                 .buttonStyle(.bordered)

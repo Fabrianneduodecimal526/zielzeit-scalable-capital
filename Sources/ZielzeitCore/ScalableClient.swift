@@ -10,15 +10,18 @@ public enum ScalableError: LocalizedError, Equatable {
     public var errorDescription: String? {
         switch self {
         case .notInstalled(let path):
-            return "Scalable CLI not found at \(path)"
+            return Strings.cliNotFound(path: path)
         case .timedOut:
-            return "Scalable CLI timed out"
+            return Strings.cliTimedOut
         case .notLoggedIn:
-            return "Not logged in — run `sc login` in a terminal"
+            return Strings.notLoggedIn
+        // The CLI's own message, passed through untranslated: it is the broker
+        // speaking, not Zielzeit, and paraphrasing it would make a real error
+        // harder to search for.
         case .failed(let message):
             return message
         case .unexpectedResponse(let command):
-            return "Unexpected response from `sc \(command)`"
+            return Strings.unexpectedResponse(command: command)
         }
     }
 }

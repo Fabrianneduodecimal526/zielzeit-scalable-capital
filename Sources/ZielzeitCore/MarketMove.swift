@@ -33,14 +33,14 @@ public enum ReturnWindow: String, CaseIterable, Sendable {
     /// with no window attached would be picking whichever answer flattered.
     public var label: String {
         switch self {
-        case .intraday: return "today"
-        case .twoDays: return "2 days"
-        case .oneWeek: return "this week"
-        case .oneMonth: return "this month"
-        case .threeMonths: return "3 months"
-        case .sixMonths: return "6 months"
-        case .oneYear: return "past year"
-        case .max: return "all time"
+        case .intraday: return Strings.windowToday
+        case .twoDays: return Strings.windowTwoDays
+        case .oneWeek: return Strings.windowThisWeek
+        case .oneMonth: return Strings.windowThisMonth
+        case .threeMonths: return Strings.windowThreeMonths
+        case .sixMonths: return Strings.windowSixMonths
+        case .oneYear: return Strings.windowPastYear
+        case .max: return Strings.windowAllTime
         }
     }
 
@@ -58,7 +58,7 @@ public enum ReturnWindow: String, CaseIterable, Sendable {
     /// version of the same figure is "last session". Every other window is a
     /// trailing span ending at the valuation, so its name stays true regardless.
     public func label(isCurrentSession: Bool) -> String {
-        isSessionBound && !isCurrentSession ? "last session" : label
+        isSessionBound && !isCurrentSession ? Strings.windowLastSession : label
     }
 }
 

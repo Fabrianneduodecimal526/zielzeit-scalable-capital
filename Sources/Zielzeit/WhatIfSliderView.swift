@@ -29,13 +29,13 @@ struct WhatIfSliderView: View {
                 Image(systemName: "arrow.right")
                     .font(.system(size: 7, weight: .bold))
                     .foregroundStyle(.tertiary)
-                Text("\(Format.euro(report.snapshot.monthlySavings + extraSavings))/mo")
+                Text("\(Format.euro(report.snapshot.monthlySavings + extraSavings))\(Strings.perMonth)")
                     .foregroundStyle(Theme.accent)
             }
             .font(Theme.numeric(11, weight: .semibold))
             .contentTransition(.numericText())
         } else {
-            Text("now \(Format.euro(report.snapshot.monthlySavings))/mo")
+            Text(Strings.nowPerMonth(Format.euro(report.snapshot.monthlySavings)))
                 .font(Theme.numeric(11, weight: .medium))
                 .foregroundStyle(.secondary)
         }
@@ -44,7 +44,7 @@ struct WhatIfSliderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack {
-                SectionLabel(text: "Save more")
+                SectionLabel(text: Strings.saveMore)
                 Spacer()
                 total
             }
@@ -54,7 +54,7 @@ struct WhatIfSliderView: View {
                 .tint(Theme.accent)
 
             HStack(spacing: 0) {
-                Text("+€0")
+                Text("+\(Format.euro(0))")
                 Spacer()
                 Text("+\(Format.euro(maximum))")
             }

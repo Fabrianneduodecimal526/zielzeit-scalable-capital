@@ -87,7 +87,7 @@ no `import AppKit`/`SwiftUI` in `ZielzeitCore`, no math in the view layer.
   `ScenarioListView`/`WhatIfSliderView`/`MarketChipView`/`GoalEditorView`/`SetupView`/`Theme`
   (SwiftUI), `ViewState`, `LaunchAtLogin`, `StatusItemIcon` (menu bar ring), `AppIconArtwork`
   (app icon), `TextMode`, `RenderMode`, `DevState`
-- `Tests/ZielzeitCoreTests/`: 229 tests covering the math, curves, view model, amount parsing, and
+- `Tests/ZielzeitCoreTests/`: 245 tests covering the math, curves, view model, amount parsing, and
   decoding against payloads *shaped* from real CLI responses. **Shaped, not captured: no fixture may
   carry real account data.** No real balance, contribution, installation code or ISIN. The repo is
   public, and the CI hygiene job fails the build on anything matching those shapes. Keep the
@@ -207,6 +207,69 @@ language mode by choice, since strict concurrency buys nothing in a single-windo
   `ScenarioListView` and `ProjectionChartView` key their emphasis off `report.headlineLabel` rather
   than a literal `"Moderate"`. That is what keeps the highlighted row, the thick curve, the area
   fill and the hero from drifting apart.
+
+### Language
+
+English and German. `AppLanguage.current` is the one switch, and `Strings` in `ZielzeitCore` is the
+one table; nothing outside it holds display text. The language is resolved once in `main`, by
+`LanguageStore.resolved`, in a fixed order: **`ZIELZEIT_LANG`, then the reader's stored choice, then
+the device.**
+
+- **`.system` is a real third option, not the absence of one.** It means "keep following the Mac", so
+  moving the Mac to German moves Zielzeit with it. Storing the resolved language instead would
+  silently freeze that, which is why picking it *removes* the key rather than writing a sentinel.
+  An unrecognised stored value — one left by a future version — also reads as `.system`.
+- **The env override outranks the stored choice on purpose.** It exists to render a language on
+  demand for `make ui`/`make shots`, and a preference saved on the developer's own Mac must not
+  defeat it.
+- **`AppModel.languagePreference` is what makes a change visible.** The strings are computed
+  properties on `Strings` with nothing for SwiftUI to observe, so `PopoverView` hangs its `.id` on
+  the preference to rebuild the tree and `StatusItemController.observeTitle` tracks it to redraw the
+  status item. Drop either and half the labels stay in the previous language until the next fetch.
+- The picker is in both the footer's `…` menu and the status item's right-click menu — if the app
+  has come up in a language the reader cannot follow, the popover is the harder of the two to
+  navigate. Languages name themselves (`AppLanguage.endonym`: `English`, `Deutsch`) and only
+  "System" is translated, for the same reason.
+
+- **No `.lproj` bundles, deliberately.** This package ships no resources at all — the icons are
+  drawn in code and the app bundle is assembled by hand in the Makefile — so `Bundle.module` would
+  mean a resource bundle that has to be copied into `Contents/Resources` correctly or the app
+  silently renders keys. A Swift table cannot half-load, and `--once`, the tests and the app read
+  from exactly one place.
+- **`AppLanguage.current` defaults to English and only `main` sets it**, from `.detected`. That
+  direction is what keeps the 229 English test assertions deterministic without every test file
+  pinning a language, and only the app has a device to ask. `LocalizationTests` sets it and restores
+  it in a `defer`, since it is process-wide.
+- `ZIELZEIT_LANG=de` is the only way to review the German layout from a Mac set to English, so
+  `make ui`/`make shots` take it too. Clear a test residue with
+  `defaults delete com.zielzeit.Zielzeit language`.
+- `CFBundleLocalizations` in `Info.plist` is declared even though there are no `.lproj` folders: it
+  is what lists Zielzeit in System Settings › Language & Region › Applications, and that picker
+  works by writing `AppleLanguages` into the app's own defaults domain, which is what
+  `Locale.preferredLanguages` reads.
+- **German number formatting is pinned, English is not.** English keeps `Locale.current` because
+  that is what it has always done — a German Mac reading an English UI has shown `€11 795,78` since
+  the first release, and forcing `en_US` would change the figures for existing users. German pins
+  `de_DE`, so `ZIELZEIT_LANG=de` on an English Mac is German throughout instead of German words
+  around English numbers. The narrow-space grouping is the app's own in both, with
+  `minimumGroupingDigits = 1` so `1 750 €` does not sit beside `11 709,98 €` ungrouped.
+- **The € moves.** `Format.euro` leads in English and trails in German (DIN 5008), driven by
+  `AppLanguage.currencySymbolLeads`, which `GoalEditorView` reads too so the field's symbol sits on
+  the same side as every printed amount.
+- **`Format.duration` returns German in the dative** ("In 15,7 Jahren"). Its sole call site is the
+  hero sentence that opens with "In …", and there is no second one to keep a nominative form for.
+- **`Format.pad` now leaves at least one trailing space.** `letzter Schluss` is wider than the market
+  column and would otherwise butt against the arrow. No English label reaches its column width, so
+  the English text output is byte-identical.
+- **`Report.summaryRows` carries a `kind`**, and `PortfolioFactsView` keys its symbols and tints off
+  that. It used to switch on the label — an icon that vanishes in German is exactly what a string
+  comparison invites. Scenario labels stay strings because everything already compares against
+  `Report.*Label` rather than a literal, which is what let them be translated at all.
+- **Two things stay English in both languages** and should not be "finished": `AccessRequest`'s
+  email body, which goes to Scalable Capital's beta address where the documented process is English,
+  and `ScalableError.failed`, which is the CLI's own message passed through.
+- German disclaimer lines are held to the same one-line-under-70-characters rule, asserted
+  separately — German is the language that breaks it.
 
 ## Development commands
 
@@ -439,6 +502,8 @@ Environment overrides, honoured by every mode:
 - `ZIELZEIT_GOAL`: use a goal without touching the saved one
 - `ZIELZEIT_SC_BIN`: point at a stub to exercise failure states (`/usr/bin/false` for no output, a
   script printing `please run sc login` for the auth path)
+- `ZIELZEIT_LANG`: `en` or `de`, overriding the device language — the only way to review the German
+  layout from a Mac set to English
 
 ## Footguns already paid for
 

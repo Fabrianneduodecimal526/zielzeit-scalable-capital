@@ -94,6 +94,20 @@ final class AppModel {
         }
     }
 
+    /// The chosen language, or `.system` to keep following the Mac.
+    ///
+    /// Observable so that changing it redraws everything: the strings themselves
+    /// are plain computed values on `Strings` and have nothing to observe, so this
+    /// property is what the popover and the status item watch. `PopoverView`
+    /// hangs its `.id` on it and `StatusItemController.observeTitle` tracks it.
+    var languagePreference: LanguagePreference {
+        didSet {
+            guard languagePreference != oldValue else { return }
+            languageStore.setPreference(languagePreference)
+            AppLanguage.current = languageStore.resolved
+        }
+    }
+
     var isEditingGoal = false
     var goalDraft = ""
 
@@ -119,6 +133,7 @@ final class AppModel {
     private let prober: SetupProbing?
     private var goalStore: GoalStore
     private let setupStore: SetupStore
+    private let languageStore: LanguageStore
     private var isFetching = false
 
     /// Once a session has proven itself, later refreshes skip the setup probe.
@@ -133,12 +148,17 @@ final class AppModel {
         prober: SetupProbing? = ScalableClient(),
         goalStore: GoalStore = GoalStore(),
         setupStore: SetupStore = SetupStore(),
+        languageStore: LanguageStore = LanguageStore(),
         state: ViewState? = nil
     ) {
         self.provider = provider
         self.prober = prober
         self.goalStore = goalStore
         self.setupStore = setupStore
+        self.languageStore = languageStore
+        // Read, not written: `main` has already resolved and applied the language
+        // by the time a model exists, so this only mirrors it for the menu.
+        self.languagePreference = languageStore.preference
         if let state {
             self.state = state
             // `--open`/`--render` hand a finished report straight in, bypassing

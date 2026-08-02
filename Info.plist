@@ -4,6 +4,19 @@
 <dict>
 	<key>CFBundleName</key>
 	<string>Zielzeit</string>
+	<!-- Declared even though the strings live in Swift rather than in .lproj
+	     bundles. This is what puts Zielzeit in System Settings › General ›
+	     Language & Region › Applications, and that picker works by writing
+	     AppleLanguages into the app's own defaults domain — which is exactly what
+	     Locale.preferredLanguages reads. So declaring the two languages is what
+	     lets a user run a German Zielzeit on an English Mac. -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Zielzeit</string>
 	<key>CFBundleIdentifier</key>

@@ -47,16 +47,25 @@ shots: ## Regenerate the README screenshots in docs/ from synthetic data
 	@# 3×, not 2×: the README shows the popover at 380px wide, so a 2× shot lands at
 	@# 1.8 device pixels per CSS pixel on a Retina screen and reads soft. 3× clears
 	@# Retina with room to spare; 4× only costs file size.
-	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 \
+	@# ZIELZEIT_LANG is set on every shot, English ones included: it outranks the
+	@# stored preference, so without it a developer who has switched the app to
+	@# German would quietly regenerate the English screenshots in German.
+	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=en \
 		.build/debug/Zielzeit --shot docs/popover.png ready --dark --scale 2
-	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 \
+	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=en \
 		.build/debug/Zielzeit --shot docs/setup.png setup-access --dark --scale 2
+	@# The same two states in German. Same stub, same goal, same scale, so the
+	@# pair differs only in language.
+	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=de \
+		.build/debug/Zielzeit --shot docs/popover-de.png ready --dark --scale 2
+	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=de \
+		.build/debug/Zielzeit --shot docs/setup-de.png setup-access --dark --scale 2
 	@.build/debug/Zielzeit --menubar docs/menubar.png --dark --scale 8
 	@.build/debug/Zielzeit --icons docs/menubar-states.png --dark >/dev/null
 	@rm -rf .build/readme-iconset
 	@.build/debug/Zielzeit --appicon .build/readme-iconset >/dev/null
 	@cp .build/readme-iconset/icon_256x256@2x.png docs/icon.png
-	@echo "Wrote docs/{popover,setup,menubar,menubar-states,icon}.png"
+	@echo "Wrote docs/{popover,popover-de,setup,setup-de,menubar,menubar-states,icon}.png"
 
 icon: ## Generate Zielzeit.icns (the app icon) from the drawn artwork
 	@swift build

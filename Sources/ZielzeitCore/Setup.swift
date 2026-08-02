@@ -65,10 +65,15 @@ public enum AccessRequest {
     /// from an unrecognised sender simply never gets answered, with nothing in
     /// the app able to reveal why. So the sender has to be called out explicitly
     /// wherever the request is offered.
-    public static let senderNote =
-        "Send it from the email address registered with Scalable Capital — check the From field."
+    public static var senderNote: String { Strings.senderNote }
 
     /// Body of the allowlisting request.
+    ///
+    /// Deliberately English in both languages. This is not app copy: it goes to
+    /// Scalable Capital's beta address, where the documented process is in
+    /// English and a request that reads unexpectedly is a request that waits
+    /// longer. The app's own warning around it is translated; the message itself
+    /// is not.
     public static func emailBody(installationCode: String) -> String {
         """
         Hello,

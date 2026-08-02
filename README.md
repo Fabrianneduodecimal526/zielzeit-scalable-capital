@@ -12,7 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-15%2B-black?logo=apple" alt="macOS 15+">
   <img src="https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white" alt="Swift 6">
-  <img src="https://img.shields.io/badge/tests-229%20passing-3ECF8E" alt="229 tests passing">
+  <a href="https://github.com/Mannafee/zielzeit-scalable-capital/actions/workflows/ci.yml"><img src="https://github.com/Mannafee/zielzeit-scalable-capital/actions/workflows/ci.yml/badge.svg" alt="CI status"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license">
   <img src="https://img.shields.io/badge/broker%20access-read--only-3ECF8E" alt="Read-only broker access">
 </p>
@@ -35,6 +35,13 @@ out a projected arrival year and keeps it in your menu bar.
 
 <p align="center">
   <img src="docs/popover.png" alt="The Zielzeit popover: projected year 2033, a projection chart with three scenarios, and sliders for saving more and picking a target year" width="344">
+</p>
+
+Zielzeit speaks **English and German**, picked from your Mac's language and switchable in the app.
+The same popover, in German:
+
+<p align="center">
+  <img src="docs/popover-de.png" alt="The same Zielzeit popover in German: Prognose 2033, In 7,1 Jahren hast du etwa 250 000 €, with the scenarios Vorsichtig, Moderat and Dein Tempo" width="344">
 </p>
 
 <sub>Figures in every screenshot are synthetic demo data, not a real account.</sub>
@@ -66,7 +73,7 @@ out a projected arrival year and keeps it in your menu bar.
 
 ## Download and install
 
-**[⬇︎ Download the latest release](https://github.com/Mannafee/zielzeit/releases/latest).** It is a
+**[⬇︎ Download the latest release](https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest).** It is a
 universal build, so it runs on Apple silicon and Intel. No Xcode, no Terminal.
 
 1. Download `Zielzeit.dmg`, open it, and drag Zielzeit onto the Applications folder.
@@ -102,8 +109,8 @@ Right-click the menu bar item for Launch at login, refresh, and quit.
 Compiling takes about a minute and avoids the Gatekeeper prompt.
 
 ```sh
-git clone https://github.com/Mannafee/zielzeit.git
-cd zielzeit
+git clone https://github.com/Mannafee/zielzeit-scalable-capital.git
+cd zielzeit-scalable-capital
 make run          # builds Zielzeit.app, ad-hoc signs it, and launches it
 ```
 
@@ -129,6 +136,13 @@ around it one tap.
   <img src="docs/setup.png" alt="Zielzeit's onboarding checklist: install the CLI, request beta access, sign in" width="344">
 </p>
 
+<details>
+<summary>Auf Deutsch</summary>
+<p align="center">
+  <img src="docs/setup-de.png" alt="The same onboarding checklist in German: Scalable CLI installieren, Beta-Zugang anfragen, Anmelden" width="344">
+</p>
+</details>
+
 1. **Install the CLI.** A copy button for `brew tap ScalableCapital/tap && brew install scalable-cli`.
 2. **Request beta access.** Zielzeit reads your installation code, and the Request access button
    opens a prefilled email to `cli.beta@scalable.capital`. Nothing to compose.
@@ -139,8 +153,8 @@ around it one tap.
 3. **Sign in.** Run `sc login --local-read-only` yourself in Terminal. Zielzeit shows the command and
    can open Terminal with it typed but not executed.
 
-Then set your goal. `100000`, `100.000`, `€100 000` and `100k` all parse. Amounts follow your system
-locale, so a German-locale Mac shows `€42 350,18`.
+Then set your goal. `100000`, `100.000`, `€100 000` and `100k` all parse. In German, amounts are
+written the German way, with the symbol after the number: `42 350,18 €`.
 
 ### Three things Zielzeit will not do
 
@@ -218,7 +232,7 @@ targets, the UI harnesses, and how to exercise every state without touching a re
 The short version:
 
 ```sh
-make test     # 229 unit tests, all in ZielzeitCore
+make test     # 245 unit tests, all in ZielzeitCore
 make once     # print the report as text, the fastest check of the numbers
 make ui       # rasterize the popover, light and dark
 make help     # every target
@@ -227,6 +241,9 @@ make help     # every target
 One rule matters more than the rest: all arithmetic lives in `ZielzeitCore` and all UI in `Zielzeit`.
 No `import SwiftUI` in the core, no math in the views. That split is what makes the projections
 testable and the harnesses possible.
+
+If Zielzeit is useful to you, a ⭐ on the repository is the cheapest way to say so, and it is what
+helps other Scalable Capital investors find it.
 
 ## Disclaimer
 

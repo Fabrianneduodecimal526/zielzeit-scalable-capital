@@ -24,7 +24,7 @@ enum TextMode {
         }
 
         guard let goal = goalStore.goal else {
-            complain("No goal set. Set one in the app, or pass ZIELZEIT_GOAL=100000.")
+            complain(Strings.noGoalSet)
             return 2
         }
         do {
@@ -32,43 +32,43 @@ enum TextMode {
             print(Report(goal: goal, snapshot: snapshot).textReport())
             return 0
         } catch {
-            complain("Error: \(error.localizedDescription)")
+            complain(Strings.errorPrefix(error.localizedDescription))
             return 1
         }
     }
 
     /// The onboarding steps, as text.
     private static func setupInstructions(for state: SetupState) -> String {
-        var lines = ["Zielzeit isn't connected to your portfolio yet.", ""]
+        var lines = [Strings.notConnectedYet, ""]
 
         switch state {
         case .cliMissing:
             lines += [
-                "1. Install the Scalable CLI (it's in beta):",
+                Strings.stepInstallCLI,
                 "     \(AccessRequest.installCommand)",
                 "   \(AccessRequest.repositoryURL.absoluteString)",
                 "",
-                "2. Request allowlisting — run `sc installation-code`, then email the code to",
-                "     \(AccessRequest.emailAddress)   (subject: \(AccessRequest.emailSubject))",
+                Strings.stepRequestAllowlisting,
+                "     \(AccessRequest.emailAddress)   \(Strings.subjectNote(AccessRequest.emailSubject))",
                 "   \(AccessRequest.senderNote)",
                 "",
-                "3. Sign in:",
+                Strings.stepSignIn,
                 "     \(AccessRequest.loginCommand)",
             ]
 
         case .notConnected(let code, let hasRequested):
             if let code {
-                lines += ["Your installation code: \(code)", ""]
+                lines += [Strings.yourInstallationCode(code), ""]
             }
             if !hasRequested {
                 lines += [
-                    "If you haven't been allowlisted yet, email the code to",
-                    "  \(AccessRequest.emailAddress)   (subject: \(AccessRequest.emailSubject))",
+                    Strings.ifNotAllowlistedEmail,
+                    "  \(AccessRequest.emailAddress)   \(Strings.subjectNote(AccessRequest.emailSubject))",
                     "  \(AccessRequest.senderNote)",
                     "",
                 ]
             }
-            lines += ["Then sign in:", "  \(AccessRequest.loginCommand)"]
+            lines += [Strings.thenSignIn, "  \(AccessRequest.loginCommand)"]
 
         case .connected:
             break
