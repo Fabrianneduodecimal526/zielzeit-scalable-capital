@@ -151,8 +151,23 @@ fi
 say "Running the tests"
 make test >/dev/null || fail "tests failed — not releasing"
 
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW" Info.plist
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Info.plist
+# Edited in place with sed rather than `PlistBuddy -c Set`, which rewrites the
+# whole file: it strips every XML comment and alphabetises the keys. Info.plist
+# carries comments explaining the Sparkle feed URL's fixed-name trick, why
+# EdDSA is the entire verification, why both automatic-update keys are set, and
+# what CFBundleLocalizations is for without any .lproj bundles. The v1.2 bump
+# deleted all five and reordered the file, and the release cannot be undone —
+# so this reads a value's line and changes only that line.
+#
+# `n` advances to the line after the matching <key>, which is where a plist
+# keeps the value. Anchored on the closing </key> so CFBundleVersion does not
+# also match CFBundleShortVersionString.
+set_plist_string() {
+    /usr/bin/sed -i '' -E "/<key>$1<\/key>/{n;s|<string>[^<]*</string>|<string>$2</string>|;}" Info.plist
+}
+set_plist_string CFBundleShortVersionString "$NEW"
+set_plist_string CFBundleVersion "$BUILD"
+plutil -lint Info.plist >/dev/null || fail "the version bump left Info.plist malformed"
 
 # main is a protected branch, so the bump goes through a pull request. Pushing
 # it straight to main is rejected by the branch hook.
