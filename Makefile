@@ -44,7 +44,9 @@ site: ## Serve the GitHub Pages site locally at http://localhost:8000
 	@# The screenshots live in docs/ and are copied in, exactly as the Pages
 	@# workflow does it, so a local preview cannot differ from the published site.
 	@mkdir -p site/img
-	@cp docs/icon.png docs/menubar.png docs/menubar-states.png \
+	@# menubar-states.png is deliberately not copied: the site dropped the states
+	@# strip, and docs/ still carries it for the README.
+	@cp docs/icon.png docs/menubar.png \
 	    docs/popover.png docs/popover-de.png \
 	    docs/setup.png docs/setup-de.png site/img/
 	@echo "Serving site/ at http://localhost:8000  (ctrl-C to stop)"

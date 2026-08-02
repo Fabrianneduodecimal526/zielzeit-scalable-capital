@@ -31,7 +31,6 @@
       <a href="#features">Features</a>
       <a href="#safety">Safety</a>
       <a href="#setup">Setup</a>
-      <a href="#math">How it works</a>
       <a href="https://github.com/Mannafee/zielzeit-scalable-capital">GitHub</a>
     </nav>
     <a class="btn btn--sm" href="#download">Download</a>
@@ -45,9 +44,8 @@
     <p class="kicker">Free and open source for Scalable Capital investors</p>
     <h1>When will my portfolio reach my goal?</h1>
     <p class="sub">
-      Zielzeit keeps the answer in your menu bar. It reads your account through the official Scalable
-      CLI, read&#8209;only, with no scraping and no credentials, then turns your balance, your savings
-      plan and the return you actually earned into one year.
+      Zielzeit keeps the answer in your menu bar, read from your account through the official
+      Scalable CLI — read&#8209;only, no scraping, no credentials.
     </p>
 
     <div class="actions" id="download">
@@ -78,6 +76,21 @@
       </div>
 
       <img class="stage__pop" src="img/popover.png" width="344" alt="The Zielzeit popover: projected year 2033, a chart with three scenarios, two what-if sliders, and the portfolio facts" fetchpriority="high">
+
+      <!-- The Dock. Every tile but Zielzeit's is drawn in CSS on purpose: the
+           real Finder, Music and App Store icons are Apple's artwork and this
+           repo is public and MIT, so shipping them is not ours to do. Neutral
+           tiles also keep the eye on the one icon that is ours, which carries
+           the running dot because its popover is open above. -->
+      <div class="stage__dock" aria-hidden="true">
+        <span class="dock__tile dock__tile--1"></span>
+        <span class="dock__tile dock__tile--app">
+          <img src="img/icon.png" width="46" height="46" alt="">
+        </span>
+        <span class="dock__tile dock__tile--2"></span>
+        <span class="dock__tile dock__tile--3"></span>
+        <span class="dock__tile dock__tile--4"></span>
+      </div>
     </div>
     <p class="fineprint">Every figure shown on this page is synthetic demo data, not a real account.</p>
   </div>
@@ -86,11 +99,43 @@
 <section class="specs">
   <div class="wrap">
     <ul>
-      <li><b>macOS 15+</b><span>Sequoia or later</span></li>
-      <li><b>Universal</b><span>Apple silicon and Intel</span></li>
-      <li><b>Read-only</b><span>Five commands, no writes</span></li>
-      <li><b>No telemetry</b><span>No network code at all</span></li>
-      <li><b>MIT</b><span>Open source, free forever</span></li>
+      <li>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4.5" width="18" height="12" rx="2" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M1.5 19.5h21" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <b>macOS 15+</b><span>Sequoia or later</span>
+      </li>
+      <li>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="6.5" y="6.5" width="11" height="11" rx="2.5" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M10 3v3.5M14 3v3.5M10 17.5V21M14 17.5V21M3 10h3.5M3 14h3.5M17.5 10H21M17.5 14H21" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <b>Universal</b><span>Apple silicon and Intel</span>
+      </li>
+      <li>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M2.5 12S6 6.25 12 6.25 21.5 12 21.5 12S18 17.75 12 17.75 2.5 12 2.5 12Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="2.75" stroke="currentColor" stroke-width="1.75"/>
+        </svg>
+        <b>Read-only</b><span>Five commands, no writes</span>
+      </li>
+      <li>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="1.9" fill="currentColor"/>
+          <path d="M6.9 6.9a7.2 7.2 0 0 0 0 10.2M17.1 17.1a7.2 7.2 0 0 0 0-10.2" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+          <path d="M3.4 20.6 20.6 3.4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <b>No telemetry</b><span>No network code at all</span>
+      </li>
+      <li>
+        <svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 2.75h7L18.25 8v13.25H6a.75.75 0 0 1-.75-.75V3.5A.75.75 0 0 1 6 2.75Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+          <path d="M12.75 3v5.25h5.25" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+          <path d="M8.75 13h6.5M8.75 16.5h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <b>MIT</b><span>Open source, free forever</span>
+      </li>
     </ul>
   </div>
 </section>
@@ -103,8 +148,8 @@
     <div class="row">
       <div class="row__text">
         <h3>Three scenarios on one chart</h3>
-        <p>Cautious at 3%, moderate at 6%, and your own pace: the return your portfolio actually achieved over the trailing year, measured with the <a href="https://en.wikipedia.org/wiki/Simple_Dietz_method">simple Dietz method</a> against your real deposits.</p>
-        <p>Each curve stops where it meets the goal, so the comparison is a picture rather than a table. The headline uses your pace, not a house assumption, so the year moves with how you are actually doing.</p>
+        <p>Cautious at 3%, moderate at 6%, and your own pace: the return your portfolio actually achieved over the trailing year, measured with the <a href="https://en.wikipedia.org/wiki/Simple_Dietz_method">simple Dietz method</a>. Each curve stops where it meets the goal.</p>
+        <p>The headline uses your pace, not a house assumption, so the year moves with how you are actually doing.</p>
       </div>
       <div class="row__art">
         <div class="frame frame--chart">
@@ -117,7 +162,7 @@
       <div class="row__text">
         <h3>Two what-if sliders, both ways round</h3>
         <p><em>Save more</em> previews what another €200 a month does to every projection, live, without changing anything in your broker.</p>
-        <p><em>Reach by</em> inverts the question: pick a year and it tells you the monthly contribution that lands on it. If growth alone gets you there, it says so in words rather than printing a zero.</p>
+        <p><em>Reach by</em> inverts it: pick a year, get the monthly contribution that lands on it.</p>
       </div>
       <div class="row__art">
         <div class="frame frame--sliders">
@@ -129,8 +174,8 @@
     <div class="row">
       <div class="row__text">
         <h3>Measured, not guessed</h3>
-        <p>Your contributions are walked from a year of real transactions and summed as deposits less withdrawals, rather than inferred from today's savings plan rate. On a live account that difference was over a full percentage point.</p>
-        <p>Inflation is on screen too: the goal restated in today's money at the projected horizon, shown plainly rather than hidden behind a toggle.</p>
+        <p>Your contributions are walked from a year of real transactions, not inferred from today's savings plan rate. On a live account that difference was over a full percentage point.</p>
+        <p>Inflation is on screen too: the goal restated in today's money, not hidden behind a toggle.</p>
       </div>
       <div class="row__art">
         <div class="frame frame--facts">
@@ -142,7 +187,7 @@
     <div class="row row--flip">
       <div class="row__text">
         <h3>English and German</h3>
-        <p>Picked from your Mac's language and switchable in the app. Amounts follow the language, so it is <span class="mono">€250 000</span> in English and <span class="mono">250 000 €</span> in German, with the symbol on the side each convention puts it.</p>
+        <p>Picked from your Mac's language and switchable in the app. Amounts follow it too: <span class="mono">€250 000</span> in English, <span class="mono">250 000 €</span> in German.</p>
       </div>
       <div class="row__art">
         <div class="frame frame--hero">
@@ -151,10 +196,6 @@
       </div>
     </div>
 
-    <figure class="states">
-      <img src="img/menubar-states.png" width="990" alt="The menu bar ring drawn at 0%, 2%, 12%, 24%, 75% and 100%, plus up, down and flat carets and the unset and error states" loading="lazy">
-      <figcaption>The ring fills as you approach the goal and becomes a checkmark when you get there. It is drawn in code, not shipped as image files, so it stays crisp at any size.</figcaption>
-    </figure>
   </div>
 </section>
 
@@ -163,45 +204,75 @@
     <p class="eyebrow">Safety</p>
     <h2>Read-only, and checkable in a few minutes</h2>
     <p class="sub sub--left">
-      Zielzeit can run exactly five commands against your broker. There is no route to a trade, to any
-      other write command, or to <span class="mono">login</span>. Every claim below names the file that
-      backs it, so you can check rather than take it on faith.
+      Zielzeit can run exactly five commands against your broker, and none of them writes. Every claim
+      below comes with the command to check it yourself.
     </p>
 
     <div class="cards">
       <article>
+        <svg class="ico ico--card" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <!-- One arrow, not a swap pair: two arrowheads plus a slash collapsed
+               into a squiggle at this size. -->
+          <path d="M3.75 12h13.5M13.5 8.25 17.25 12l-3.75 3.75" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3.4 20.6 20.6 3.4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
         <h3>It cannot trade, sell, or move money</h3>
-        <p>Five commands are enumerated in one Swift type, and every call site passes one of them. No shell is involved: the CLI runs through <span class="mono">Process</span> directly, not a string that could be made to mean something else.</p>
+        <p>Five commands are enumerated in one Swift type, and every call site passes one of them. No shell is involved, so there is no string that could be made to mean something else.</p>
         <pre><code>grep -A20 'enum Command' \
   Sources/ZielzeitCore/ScalableClient.swift</code></pre>
       </article>
       <article>
+        <!-- A Terminal, not a slashed padlock: the point is that signing in
+             happens in your shell, and a crossed-out lock reads as "insecure". -->
+        <svg class="ico ico--card" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M7.25 10l2.5 2.5-2.5 2.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12.75 15.25h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
         <h3>It never sees your password or your 2FA</h3>
-        <p>It never runs <span class="mono">sc login</span>. Signing in is an OAuth device-code flow you complete yourself; the app shows you the command and can open Terminal with it typed but not executed.</p>
+        <p>It never runs <span class="mono">sc login</span>. Signing in is an OAuth device-code flow you complete yourself — the app only opens Terminal with the command typed, not executed.</p>
         <pre><code>sc login --local-read-only
 <span class="dim"># you run this, never the app</span></code></pre>
       </article>
       <article>
+        <svg class="ico ico--card" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M7.75 18.25h9.25a3.6 3.6 0 0 0 .35-7.2 5.15 5.15 0 0 0-9.9-1.2 4 4 0 0 0 .3 8.4Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+          <path d="M3.6 20.4 20.4 3.6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
         <h3>Your data cannot leave your Mac</h3>
-        <p>There is no networking code in the app at all: no <span class="mono">URLSession</span>, no sockets, no analytics, no telemetry, no crash reporter, no account. The only outbound traffic is the official CLI talking to your broker.</p>
+        <p>No networking code at all: no <span class="mono">URLSession</span>, no sockets, no analytics, no telemetry, no account. The only outbound traffic is the official CLI talking to your broker.</p>
         <pre><code>grep -rn 'URLSession' Sources/
 <span class="dim"># returns nothing</span></code></pre>
       </article>
       <article>
+        <!-- Exactly three rows, because the claim is exactly three values. -->
+        <svg class="ico ico--card" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M7.5 9.25h9M7.5 12.75h9M7.5 16.25h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
         <h3>It keeps three values, and no figures</h3>
-        <p>Your goal amount, your language, and whether you have emailed for beta access. No balance, no holdings, no transactions, no name. Those are fetched, shown, and forgotten when the app quits.</p>
+        <p>Your goal amount, your language, and whether you have emailed for beta access. No balance, no holdings, no name — those are fetched, shown, and forgotten when the app quits.</p>
         <pre><code>defaults read com.zielzeit.Zielzeit</code></pre>
       </article>
     </div>
 
     <div class="callouts">
       <div>
+        <svg class="ico ico--inline" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2.75 19.5 5.5v6.25c0 4.4-3 7.7-7.5 9.5-4.5-1.8-7.5-5.1-7.5-9.5V5.5L12 2.75Z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+          <path d="M9 11.75 11.2 14l4.3-4.3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <h3>macOS will warn you once</h3>
-        <p>The download is signed but not notarized, and notarization needs a paid Apple Developer account this project does not have. Open <b>System Settings → Privacy &amp; Security</b>, scroll down, click <b>Open Anyway</b>. Once, ever. Or build from source, and a local build is never flagged.</p>
+        <p>The download is signed but not notarized, which needs a paid Apple Developer account this project does not have. Open <b>System Settings → Privacy &amp; Security</b> and click <b>Open Anyway</b>. Once, ever.</p>
       </div>
       <div>
+        <!-- A dashed boundary: the absent box is the whole point. -->
+        <svg class="ico ico--inline" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <rect x="3.75" y="3.75" width="16.5" height="16.5" rx="3" stroke="currentColor" stroke-width="1.75" stroke-dasharray="3.5 3.75" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+        </svg>
         <h3>It is not sandboxed, and cannot be</h3>
-        <p>A sandboxed app cannot launch another program, and Zielzeit's whole job is to run the CLI you installed. So it runs with your normal user permissions. What limits it is that it is small, open, and readable end to end, not an OS boundary.</p>
+        <p>A sandboxed app cannot launch another program, and Zielzeit's whole job is to run the CLI you installed. What limits it is that it is small, open and readable end to end, not an OS boundary.</p>
       </div>
     </div>
   </div>
@@ -213,15 +284,14 @@
     <h2>Three steps, one of them an email</h2>
     <p class="sub sub--left">
       The Scalable CLI is in beta and gated: Scalable Capital has to allowlist your machine before it
-      can log in at all. That is a human round-trip nobody can automate away, so Zielzeit makes every
-      step around it one tap. The app walks you through all three on first launch.
+      can log in at all. The app walks you through all three steps on first launch.
     </p>
 
     <div class="setup">
       <ol class="steps">
         <li>
           <h3>Install the CLI</h3>
-          <p>From Scalable Capital's own Homebrew tap. Zielzeit never bundles the binary, because their guidance is to trust only official artifacts.</p>
+          <p>From Scalable Capital's own Homebrew tap. Zielzeit never bundles the binary — their guidance is to trust only official artifacts.</p>
           <div class="cmd">
             <code>brew install scalable-cli</code>
             <button class="copy" type="button" data-copy="brew tap ScalableCapital/tap && brew install scalable-cli">Copy</button>
@@ -230,11 +300,11 @@
         <li>
           <h3>Request beta access</h3>
           <p>Zielzeit reads your installation code and opens a prefilled email to <span class="mono">cli.beta@scalable.capital</span>. Nothing to compose.</p>
-          <p class="warn"><b>Send it from the address registered with Scalable Capital.</b> They match the request to your account by sender, and a request from any other address is silently never answered. A <span class="mono">mailto:</span> link opens your default mail account, which often is not that one, so check the From field.</p>
+          <p class="warn"><b>Send it from the address registered with Scalable Capital.</b> They match the request by sender, and one from any other address is silently never answered. A <span class="mono">mailto:</span> link opens your default account, which often is not that one — check the From field.</p>
         </li>
         <li>
           <h3>Sign in yourself</h3>
-          <p>An OAuth device-code flow, in your Terminal and your browser. The <span class="mono">--local-read-only</span> flag stores the session in locally enforced read-only mode, which makes the promise structural rather than editorial.</p>
+          <p>An OAuth device-code flow, in your Terminal and your browser. <span class="mono">--local-read-only</span> stores the session in locally enforced read-only mode.</p>
           <div class="cmd">
             <code>sc login --local-read-only</code>
             <button class="copy" type="button" data-copy="sc login --local-read-only">Copy</button>
@@ -256,30 +326,6 @@
         <button class="copy" type="button" data-copy="git clone https://github.com/Mannafee/zielzeit-scalable-capital.git&#10;cd zielzeit-scalable-capital&#10;make run">Copy</button>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="band band--alt" id="math">
-  <div class="wrap">
-    <p class="eyebrow">How it works</p>
-    <h2>Two formulas, and a test that keeps them honest</h2>
-
-    <div class="cards cards--two">
-      <article>
-        <h3>Your realized return, simple Dietz</h3>
-        <pre><code>rate = gain₁ᵧ ÷ (total − gain₁ᵧ − contributions ÷ 2)</code></pre>
-        <p>Contributions are measured, not guessed. Securities movements are excluded, because a custody migration would otherwise look like a year of deposits. The rate is clamped to ±30%, and suppressed entirely when the capital base works out to zero or less. That is what happens to a portfolio younger than a year, where deposits rather than growth explain the balance.</p>
-      </article>
-      <article>
-        <h3>Time to the goal</h3>
-        <pre><code>t = ln((G·r + P) ÷ (V·r + P)) ÷ ln(1 + r)</code></pre>
-        <p><span class="mono">G</span> goal, <span class="mono">V</span> current value, <span class="mono">P</span> monthly contribution, <span class="mono">r</span> monthly rate converted geometrically. If your savings plan steps up each year, the contribution becomes a step function the closed form cannot express, so Zielzeit walks forward one twelve-month block at a time and applies the same formula at each year's contribution.</p>
-      </article>
-    </div>
-
-    <p class="aside">The chart plots that same recurrence forward, and a test asserts each curve meets the goal line at exactly the month the formula returns. That cross-check is what stops the picture and the headline from quietly disagreeing.</p>
-
-    <p class="caveat"><b>These are projections, not predictions.</b> They assume a constant return, smooth compounding and an uninterrupted savings plan, none of which is how markets or life work. Before tax. Not financial advice.</p>
   </div>
 </section>
 
