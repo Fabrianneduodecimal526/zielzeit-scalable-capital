@@ -17,6 +17,10 @@
   <img src="https://img.shields.io/badge/broker%20access-read--only-3ECF8E" alt="Read-only broker access">
 </p>
 
+<p align="center">
+  <a href="https://mannafee.github.io/zielzeit-scalable-capital/"><strong>zielzeit website ↗</strong></a>
+</p>
+
 ---
 
 Zielzeit (German for "finish time") is a free, open-source macOS menu bar app for

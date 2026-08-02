@@ -19,7 +19,7 @@ STATE ?= ready
 
 .DEFAULT_GOAL := help
 .PHONY: help build test once ui shots icon icons open app run install uninstall clean \
-        release release-app dmg zip
+        release release-app dmg zip site
 
 help: ## Show available targets
 	@grep -hE '^[a-z-]+:.*##' $(MAKEFILE_LIST) | sed 's/:.*##/\t/' | expand -t 12
@@ -39,6 +39,16 @@ ui: ## Render the popover to PNGs, light and dark (STATE=ready|slider|editing|â€
 	@.build/debug/Zielzeit --render .build/ui-dark.png $(STATE) --dark
 	@echo "Open them with: open .build/ui-light.png .build/ui-dark.png"
 	@echo "Note: AppKit-backed controls (slider, menus) do not rasterize. Use 'make open' for those."
+
+site: ## Serve the GitHub Pages site locally at http://localhost:8000
+	@# The screenshots live in docs/ and are copied in, exactly as the Pages
+	@# workflow does it, so a local preview cannot differ from the published site.
+	@mkdir -p site/img
+	@cp docs/icon.png docs/menubar.png docs/menubar-states.png \
+	    docs/popover.png docs/popover-de.png \
+	    docs/setup.png docs/setup-de.png site/img/
+	@echo "Serving site/ at http://localhost:8000  (ctrl-C to stop)"
+	@python3 -m http.server 8000 --directory site
 
 shots: ## Regenerate the README screenshots in docs/ from synthetic data
 	@swift build

@@ -1,0 +1,63 @@
+name: Pages
+
+# Publishes site/ to GitHub Pages.
+#
+# The screenshots are NOT duplicated into site/: they live in docs/, where the
+# README already points at them, and are copied into site/img/ at build time.
+# One copy in git, one source of truth, and the README and the site can never
+# show different screenshots.
+#
+# Enable once, by hand: Settings → Pages → Build and deployment → Source →
+# "GitHub Actions". Without that, this workflow deploys to nothing.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/*.png"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one in flight: a half-published
+# site is worse than a stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Assemble the site
+        run: |
+          mkdir -p site/img
+          cp docs/icon.png docs/menubar.png docs/menubar-states.png \
+             docs/popover.png docs/popover-de.png \
+             docs/setup.png docs/setup-de.png site/img/
+
+      # The page loads no fonts, scripts or trackers from anyone else, and the
+      # footer says so. This fails the build if that ever stops being true.
+      - name: No third-party requests
+        run: |
+          if grep -rniE '(https?:)?//(fonts|cdn|ajax|unpkg|cdnjs|googletagmanager|google-analytics)\.' site/*.html site/*.css site/*.js; then
+            echo "::error::The site claims to make no third-party requests. Something above breaks that."
+            exit 1
+          fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

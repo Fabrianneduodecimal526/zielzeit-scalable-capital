@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zielzeit: when will my portfolio reach my goal?</title>
+<meta name="description" content="A free, open-source macOS menu bar app for Scalable Capital investors. It reads your account through the official CLI, read-only, and keeps your projected arrival year in the menu bar.">
+<link rel="canonical" href="https://mannafee.github.io/zielzeit-scalable-capital/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Zielzeit: when will my portfolio reach my goal?">
+<meta property="og:description" content="A free, open-source macOS menu bar app for Scalable Capital investors. Read-only, nothing leaves your Mac.">
+<meta property="og:url" content="https://mannafee.github.io/zielzeit-scalable-capital/">
+<meta property="og:image" content="https://mannafee.github.io/zielzeit-scalable-capital/img/popover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#ffffff">
+<link rel="icon" href="img/icon.png" type="image/png">
+<link rel="apple-touch-icon" href="img/icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="nav__in">
+    <a class="nav__brand" href="#top">
+      <img src="img/icon.png" width="26" height="26" alt="">
+      <span>Zielzeit</span>
+    </a>
+    <nav class="nav__links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#safety">Safety</a>
+      <a href="#setup">Setup</a>
+      <a href="#math">How it works</a>
+      <a href="https://github.com/Mannafee/zielzeit-scalable-capital">GitHub</a>
+    </nav>
+    <a class="btn btn--sm" href="#download">Download</a>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <p class="kicker">Free and open source for Scalable Capital investors</p>
+    <h1>When will my portfolio reach my goal?</h1>
+    <p class="sub">
+      Zielzeit keeps the answer in your menu bar. It reads your account through the official Scalable
+      CLI, read&#8209;only, with no scraping and no credentials, then turns your balance, your savings
+      plan and the return you actually earned into one year.
+    </p>
+
+    <div class="actions" id="download">
+      <a class="btn" href="https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest/download/Zielzeit.dmg">Download for macOS</a>
+      <a class="btn btn--plain" href="https://github.com/Mannafee/zielzeit-scalable-capital">View on GitHub</a>
+    </div>
+    <p class="note">Requires macOS 15 or later and the official Scalable CLI.</p>
+  </div>
+
+  <!-- The app as it actually appears: hanging from the menu bar. -->
+  <div class="wrap wrap--wide">
+    <div class="stage">
+      <div class="stage__bar" aria-hidden="true">
+        <div class="stage__items">
+          <img class="stage__app" src="img/menubar.png" width="298" alt="">
+          <svg class="sysicon" viewBox="0 0 18 14" fill="none" aria-hidden="true">
+            <path d="M1 4.6a11.5 11.5 0 0 1 16 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <path d="M4 7.8a7 7 0 0 1 10 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="9" cy="11.4" r="1.4" fill="currentColor"/>
+          </svg>
+          <svg class="sysicon sysicon--batt" viewBox="0 0 26 13" fill="none" aria-hidden="true">
+            <rect x="0.7" y="0.7" width="21" height="11.6" rx="3.2" stroke="currentColor" stroke-width="1.2" opacity="0.55"/>
+            <rect x="2.4" y="2.4" width="14" height="8.2" rx="1.9" fill="currentColor"/>
+            <path d="M23.6 4.6v3.8a2.4 2.4 0 0 0 0-3.8Z" fill="currentColor" opacity="0.55"/>
+          </svg>
+          <span class="stage__clock">Sat 14:22</span>
+        </div>
+      </div>
+
+      <img class="stage__pop" src="img/popover.png" width="344" alt="The Zielzeit popover: projected year 2033, a chart with three scenarios, two what-if sliders, and the portfolio facts" fetchpriority="high">
+    </div>
+    <p class="fineprint">Every figure shown on this page is synthetic demo data, not a real account.</p>
+  </div>
+</section>
+
+<section class="specs">
+  <div class="wrap">
+    <ul>
+      <li><b>macOS 15+</b><span>Sequoia or later</span></li>
+      <li><b>Universal</b><span>Apple silicon and Intel</span></li>
+      <li><b>Read-only</b><span>Five commands, no writes</span></li>
+      <li><b>No telemetry</b><span>No network code at all</span></li>
+      <li><b>MIT</b><span>Open source, free forever</span></li>
+    </ul>
+  </div>
+</section>
+
+<section class="band" id="features">
+  <div class="wrap">
+    <p class="eyebrow">Features</p>
+    <h2>A year you can see without opening anything</h2>
+
+    <div class="row">
+      <div class="row__text">
+        <h3>Three scenarios on one chart</h3>
+        <p>Cautious at 3%, moderate at 6%, and your own pace: the return your portfolio actually achieved over the trailing year, measured with the <a href="https://en.wikipedia.org/wiki/Simple_Dietz_method">simple Dietz method</a> against your real deposits.</p>
+        <p>Each curve stops where it meets the goal, so the comparison is a picture rather than a table. The headline uses your pace, not a house assumption, so the year moves with how you are actually doing.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--chart">
+          <img src="img/popover.png" width="344" alt="The projection chart with three curves, and the scenario list showing cautious 3.0% arriving 2042, moderate 6.0% arriving 2039, and your pace 19.7% arriving 2033">
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--flip">
+      <div class="row__text">
+        <h3>Two what-if sliders, both ways round</h3>
+        <p><em>Save more</em> previews what another €200 a month does to every projection, live, without changing anything in your broker.</p>
+        <p><em>Reach by</em> inverts the question: pick a year and it tells you the monthly contribution that lands on it. If growth alone gets you there, it says so in words rather than printing a zero.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--sliders">
+          <img src="img/popover.png" width="344" alt="The two sliders: save more, currently €500 a month, and reach by, showing €446 a month for the end of 2033" loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row__text">
+        <h3>Measured, not guessed</h3>
+        <p>Your contributions are walked from a year of real transactions and summed as deposits less withdrawals, rather than inferred from today's savings plan rate. On a live account that difference was over a full percentage point.</p>
+        <p>Inflation is on screen too: the goal restated in today's money at the projected horizon, shown plainly rather than hidden behind a toggle.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--facts">
+          <img src="img/popover.png" width="344" alt="The portfolio facts: portfolio €42 350,18, saving €500,00 a month across two plans with a 5% yearly step-up, and past year +€6 480,72" loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--flip">
+      <div class="row__text">
+        <h3>English and German</h3>
+        <p>Picked from your Mac's language and switchable in the app. Amounts follow the language, so it is <span class="mono">€250 000</span> in English and <span class="mono">250 000 €</span> in German, with the symbol on the side each convention puts it.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--hero">
+          <img src="img/popover-de.png" width="344" alt="The same popover in German: Prognose 2033, In 7,1 Jahren hast du etwa 250 000 €" loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <figure class="states">
+      <img src="img/menubar-states.png" width="990" alt="The menu bar ring drawn at 0%, 2%, 12%, 24%, 75% and 100%, plus up, down and flat carets and the unset and error states" loading="lazy">
+      <figcaption>The ring fills as you approach the goal and becomes a checkmark when you get there. It is drawn in code, not shipped as image files, so it stays crisp at any size.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="band band--alt" id="safety">
+  <div class="wrap">
+    <p class="eyebrow">Safety</p>
+    <h2>Read-only, and checkable in a few minutes</h2>
+    <p class="sub sub--left">
+      Zielzeit can run exactly five commands against your broker. There is no route to a trade, to any
+      other write command, or to <span class="mono">login</span>. Every claim below names the file that
+      backs it, so you can check rather than take it on faith.
+    </p>
+
+    <div class="cards">
+      <article>
+        <h3>It cannot trade, sell, or move money</h3>
+        <p>Five commands are enumerated in one Swift type, and every call site passes one of them. No shell is involved: the CLI runs through <span class="mono">Process</span> directly, not a string that could be made to mean something else.</p>
+        <pre><code>grep -A20 'enum Command' \
+  Sources/ZielzeitCore/ScalableClient.swift</code></pre>
+      </article>
+      <article>
+        <h3>It never sees your password or your 2FA</h3>
+        <p>It never runs <span class="mono">sc login</span>. Signing in is an OAuth device-code flow you complete yourself; the app shows you the command and can open Terminal with it typed but not executed.</p>
+        <pre><code>sc login --local-read-only
+<span class="dim"># you run this, never the app</span></code></pre>
+      </article>
+      <article>
+        <h3>Your data cannot leave your Mac</h3>
+        <p>There is no networking code in the app at all: no <span class="mono">URLSession</span>, no sockets, no analytics, no telemetry, no crash reporter, no account. The only outbound traffic is the official CLI talking to your broker.</p>
+        <pre><code>grep -rn 'URLSession' Sources/
+<span class="dim"># returns nothing</span></code></pre>
+      </article>
+      <article>
+        <h3>It keeps three values, and no figures</h3>
+        <p>Your goal amount, your language, and whether you have emailed for beta access. No balance, no holdings, no transactions, no name. Those are fetched, shown, and forgotten when the app quits.</p>
+        <pre><code>defaults read com.zielzeit.Zielzeit</code></pre>
+      </article>
+    </div>
+
+    <div class="callouts">
+      <div>
+        <h3>macOS will warn you once</h3>
+        <p>The download is signed but not notarized, and notarization needs a paid Apple Developer account this project does not have. Open <b>System Settings → Privacy &amp; Security</b>, scroll down, click <b>Open Anyway</b>. Once, ever. Or build from source, and a local build is never flagged.</p>
+      </div>
+      <div>
+        <h3>It is not sandboxed, and cannot be</h3>
+        <p>A sandboxed app cannot launch another program, and Zielzeit's whole job is to run the CLI you installed. So it runs with your normal user permissions. What limits it is that it is small, open, and readable end to end, not an OS boundary.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band" id="setup">
+  <div class="wrap">
+    <p class="eyebrow">Setup</p>
+    <h2>Three steps, one of them an email</h2>
+    <p class="sub sub--left">
+      The Scalable CLI is in beta and gated: Scalable Capital has to allowlist your machine before it
+      can log in at all. That is a human round-trip nobody can automate away, so Zielzeit makes every
+      step around it one tap. The app walks you through all three on first launch.
+    </p>
+
+    <div class="setup">
+      <ol class="steps">
+        <li>
+          <h3>Install the CLI</h3>
+          <p>From Scalable Capital's own Homebrew tap. Zielzeit never bundles the binary, because their guidance is to trust only official artifacts.</p>
+          <div class="cmd">
+            <code>brew install scalable-cli</code>
+            <button class="copy" type="button" data-copy="brew tap ScalableCapital/tap && brew install scalable-cli">Copy</button>
+          </div>
+        </li>
+        <li>
+          <h3>Request beta access</h3>
+          <p>Zielzeit reads your installation code and opens a prefilled email to <span class="mono">cli.beta@scalable.capital</span>. Nothing to compose.</p>
+          <p class="warn"><b>Send it from the address registered with Scalable Capital.</b> They match the request to your account by sender, and a request from any other address is silently never answered. A <span class="mono">mailto:</span> link opens your default mail account, which often is not that one, so check the From field.</p>
+        </li>
+        <li>
+          <h3>Sign in yourself</h3>
+          <p>An OAuth device-code flow, in your Terminal and your browser. The <span class="mono">--local-read-only</span> flag stores the session in locally enforced read-only mode, which makes the promise structural rather than editorial.</p>
+          <div class="cmd">
+            <code>sc login --local-read-only</code>
+            <button class="copy" type="button" data-copy="sc login --local-read-only">Copy</button>
+          </div>
+        </li>
+      </ol>
+
+      <figure class="shot">
+        <img src="img/setup.png" width="344" alt="Zielzeit's onboarding checklist: install the CLI, request beta access, sign in, each with a copy button" loading="lazy">
+        <figcaption>The same three steps, inside the app.</figcaption>
+      </figure>
+    </div>
+
+    <div class="build">
+      <h3>Or build it yourself</h3>
+      <p>About a minute, and no Gatekeeper prompt.</p>
+      <div class="cmd cmd--multi">
+        <code>git clone https://github.com/Mannafee/zielzeit-scalable-capital.git<br>cd zielzeit-scalable-capital<br>make run</code>
+        <button class="copy" type="button" data-copy="git clone https://github.com/Mannafee/zielzeit-scalable-capital.git&#10;cd zielzeit-scalable-capital&#10;make run">Copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band band--alt" id="math">
+  <div class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2>Two formulas, and a test that keeps them honest</h2>
+
+    <div class="cards cards--two">
+      <article>
+        <h3>Your realized return, simple Dietz</h3>
+        <pre><code>rate = gain₁ᵧ ÷ (total − gain₁ᵧ − contributions ÷ 2)</code></pre>
+        <p>Contributions are measured, not guessed. Securities movements are excluded, because a custody migration would otherwise look like a year of deposits. The rate is clamped to ±30%, and suppressed entirely when the capital base works out to zero or less. That is what happens to a portfolio younger than a year, where deposits rather than growth explain the balance.</p>
+      </article>
+      <article>
+        <h3>Time to the goal</h3>
+        <pre><code>t = ln((G·r + P) ÷ (V·r + P)) ÷ ln(1 + r)</code></pre>
+        <p><span class="mono">G</span> goal, <span class="mono">V</span> current value, <span class="mono">P</span> monthly contribution, <span class="mono">r</span> monthly rate converted geometrically. If your savings plan steps up each year, the contribution becomes a step function the closed form cannot express, so Zielzeit walks forward one twelve-month block at a time and applies the same formula at each year's contribution.</p>
+      </article>
+    </div>
+
+    <p class="aside">The chart plots that same recurrence forward, and a test asserts each curve meets the goal line at exactly the month the formula returns. That cross-check is what stops the picture and the headline from quietly disagreeing.</p>
+
+    <p class="caveat"><b>These are projections, not predictions.</b> They assume a constant return, smooth compounding and an uninterrupted savings plan, none of which is how markets or life work. Before tax. Not financial advice.</p>
+  </div>
+</section>
+
+<section class="close">
+  <div class="wrap">
+    <img src="img/icon.png" width="64" height="64" alt="">
+    <h2>Put the year in your menu bar</h2>
+    <div class="actions actions--center">
+      <a class="btn" href="https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest/download/Zielzeit.dmg">Download Zielzeit.dmg</a>
+      <a class="btn btn--plain" href="https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest">All releases</a>
+    </div>
+    <p class="note">If it is useful to you, a star on the repository is the cheapest way to say so.</p>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <nav class="foot__links" aria-label="Elsewhere">
+      <a href="https://github.com/Mannafee/zielzeit-scalable-capital">Repository</a>
+      <a href="https://github.com/Mannafee/zielzeit-scalable-capital/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/Mannafee/zielzeit-scalable-capital/issues">Issues</a>
+      <a href="https://github.com/Mannafee/zielzeit-scalable-capital/blob/main/LICENSE">MIT licence</a>
+    </nav>
+    <p>
+      Zielzeit is an independent, unofficial open-source project. Not affiliated with, endorsed by, or
+      supported by Scalable Capital GmbH. “Scalable Capital” is their trademark, used here only to
+      describe what this app reads. The figures shown are projections, and nothing here is financial
+      advice. Use at your own risk.
+    </p>
+    <p class="foot__c">© Istiaque Mannafee Shaikat · MIT · This page loads no fonts, scripts or trackers from anyone else.</p>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
