@@ -17,10 +17,10 @@ on:
       - "docs/*.png"
       - "Scripts/usage-badges"
       - ".github/workflows/pages.yml"
-  # Daily, because the README's "active" badge is a day-over-day delta and the
-  # site is what stores the samples: no deploy, no sample, no figure.
+  # Weekly, so the README's downloads badge does not sit frozen between site
+  # changes. It is a running total, so a missed week costs nothing but freshness.
   schedule:
-    - cron: "17 6 * * *"
+    - cron: "17 6 * * 1"
   workflow_dispatch:
 
 permissions:
