@@ -173,6 +173,110 @@ enumerated in one Swift type with no other code path. There is no route to a tra
 write command, or to `login`. Nothing leaves your Mac: no analytics, no network call of its own, no
 account of any kind.
 
+Every answer below names the file that backs it, so you can check rather than take it on faith.
+
+<details>
+<summary><b>Can Zielzeit trade, sell, or move my money?</b></summary>
+
+No. The five commands above are listed in `ScalableClient.Command`
+([`Sources/ZielzeitCore/ScalableClient.swift`](Sources/ZielzeitCore/ScalableClient.swift)) and every
+call site passes one of them. There is no code that builds a broker command from anything you type,
+and no shell is involved — the CLI is executed directly through `Process`, not through a shell
+string that could be made to mean something else.
+
+The setup also asks you to sign in with `sc login --local-read-only`. That flag makes the *session
+itself* read-only, enforced by the CLI, so the restriction survives even if you stop trusting this
+app's word for it.
+
+```sh
+grep -A20 'enum Command' Sources/ZielzeitCore/ScalableClient.swift
+```
+</details>
+
+<details>
+<summary><b>Does Zielzeit ever see my Scalable Capital password or 2FA?</b></summary>
+
+No. It never runs `sc login`, and that is deliberate — signing in is an OAuth device-code flow you
+complete yourself in Terminal and in your browser. Zielzeit shows you the command and can open
+Terminal with it typed but *not* executed. No credential ever passes through this app, and it never
+reads the session the CLI stores.
+</details>
+
+<details>
+<summary><b>Does my portfolio data leave my Mac?</b></summary>
+
+It cannot. Zielzeit contains no networking code at all — no `URLSession`, no sockets, no analytics
+SDK, no telemetry, no crash reporter, and no account to sign up for. The only outbound traffic on
+your machine is the official Scalable CLI talking to your broker, exactly as it does when you run it
+yourself in Terminal.
+
+```sh
+grep -rn 'URLSession\|import Network\|NWConnection' Sources/   # returns nothing
+```
+</details>
+
+<details>
+<summary><b>What does it store on disk, and where?</b></summary>
+
+Three values in its own preferences domain, `com.zielzeit.Zielzeit`:
+
+| Key | What it is |
+|---|---|
+| `goal` | Your goal amount, a number |
+| `language` | `en`, `de`, or absent for "follow the Mac" |
+| `hasRequestedAccess` | Whether you have emailed for beta access, a true/false |
+
+No balance, no holdings, no transactions, no name. Figures are fetched, shown, and forgotten when
+the app quits. Everything it keeps can be read — and deleted — with `defaults`:
+
+```sh
+defaults read com.zielzeit.Zielzeit
+make uninstall            # removes the app and the saved goal
+```
+</details>
+
+<details>
+<summary><b>Why does macOS say it "cannot be checked for malicious software"?</b></summary>
+
+Because the download is ad-hoc signed but not *notarized*, and notarization requires a paid Apple
+Developer account this project does not have. The warning is about the absence of that receipt, not
+about anything found in the app — Apple has not inspected it either way.
+
+That is a real limitation and worth weighing. If you would rather not rely on it, build from source;
+it is one command and takes under a minute.
+
+```sh
+codesign -dv /Applications/Zielzeit.app     # Identifier=com.zielzeit.Zielzeit, Signature=adhoc
+```
+</details>
+
+<details>
+<summary><b>Is it sandboxed?</b></summary>
+
+No, and it cannot be. A sandboxed app cannot launch another program, and Zielzeit's whole job is to
+run the Scalable CLI you installed. Being straight about that matters more than the reassurance:
+Zielzeit runs with your normal user permissions. What limits it is that it is small, open, and
+readable end to end — not an OS boundary.
+</details>
+
+<details>
+<summary><b>How do I verify all of this myself?</b></summary>
+
+Every claim here is checkable in a few minutes, and the repository is built so it stays that way:
+
+```sh
+git clone https://github.com/Mannafee/zielzeit-scalable-capital && cd zielzeit-scalable-capital
+grep -A20 'enum Command' Sources/ZielzeitCore/ScalableClient.swift   # the only commands it can run
+grep -rn 'URLSession\|import Network' Sources/                      # nothing
+make test && make run                                               # your build, your machine
+```
+
+The test suite runs against payloads *shaped* from real CLI responses and never real ones: a CI job
+fails the build if anything resembling a real balance, contribution, installation code or ISIN
+appears in the repository. That check protects contributors' accounts, and it is also why you can
+read every fixture here without seeing anyone's holdings.
+</details>
+
 ## The icons
 
 <p align="center">
