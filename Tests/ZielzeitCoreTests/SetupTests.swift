@@ -20,8 +20,15 @@ final class AccessRequestTests: XCTestCase {
     func testMailtoURLTargetsTheRightRecipient() throws {
         let url = try XCTUnwrap(AccessRequest.mailtoURL(installationCode: code))
         XCTAssertEqual(url.scheme, "mailto")
-        // The recipient lives in the path for a mailto URL, not the host.
-        XCTAssertEqual(url.path, "cli.beta@scalable.capital")
+        // Asserted against the string rather than `url.path`. The recipient of a
+        // mailto URL lives in the path rather than the host, but Foundation does
+        // not agree with itself about where that path is: `URL.path` returns the
+        // address on macOS 26 and an empty string on macOS 15, so a test using it
+        // passes on a current Mac and fails in CI on the deployment target.
+        XCTAssertTrue(
+            url.absoluteString.hasPrefix("mailto:cli.beta@scalable.capital?"),
+            url.absoluteString
+        )
     }
 
     func testMailtoURLCarriesSubjectAndCode() throws {
