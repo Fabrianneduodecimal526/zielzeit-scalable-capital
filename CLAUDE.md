@@ -211,6 +211,12 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - `make icons` — draw the menu bar glyph at every progress value, with fit diagnostics
 - `make icon` — regenerate `Zielzeit.icns` from `AppIconArtwork` (`make app` depends on it)
 - `make open [STATE=…]` — launch with the popover already open, for a real screenshot
+- `make shots` — regenerate the README images in `docs/` (always against `Scripts/sc-demo`, never a
+  real account). **Scale is a correctness matter here, not a preference:** the README sets each image's
+  display width in HTML, so the source must carry at least twice that in pixels or it reads soft on
+  every Retina screen. The popover is shown at 380px and was captured at 2× (688px = 1.8×), which is
+  why it looked blurry; it is `--scale 3` now, and the menu bar item `--scale 8`. Multiply, don't
+  guess: check `sips -g pixelWidth` against the `width=` in the README before shipping new images.
 - `make test`, `make run`, `make install`, `make help`
 
 **`make install` needs an admin account.** `/Applications` is `root:admin`, so on a standard (non-admin)

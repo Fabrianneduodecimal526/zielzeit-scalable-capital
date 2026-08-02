@@ -44,11 +44,14 @@ shots: ## Regenerate the README screenshots in docs/ from synthetic data
 	@swift build
 	@mkdir -p docs
 	@# Always against the demo stub, never a real account — these get published.
+	@# 3×, not 2×: the README shows the popover at 380px wide, so a 2× shot lands at
+	@# 1.8 device pixels per CSS pixel on a Retina screen and reads soft. 3× clears
+	@# Retina with room to spare; 4× only costs file size.
 	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 \
-		.build/debug/Zielzeit --shot docs/popover.png ready --dark --scale 2
+		.build/debug/Zielzeit --shot docs/popover.png ready --dark --scale 3
 	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 \
-		.build/debug/Zielzeit --shot docs/setup.png setup-access --dark --scale 2
-	@.build/debug/Zielzeit --menubar docs/menubar.png --dark --scale 6
+		.build/debug/Zielzeit --shot docs/setup.png setup-access --dark --scale 3
+	@.build/debug/Zielzeit --menubar docs/menubar.png --dark --scale 8
 	@.build/debug/Zielzeit --icons docs/menubar-states.png --dark >/dev/null
 	@rm -rf .build/readme-iconset
 	@.build/debug/Zielzeit --appicon .build/readme-iconset >/dev/null
