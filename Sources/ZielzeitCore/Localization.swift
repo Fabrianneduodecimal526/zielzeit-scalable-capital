@@ -405,6 +405,19 @@ public enum Strings {
     public static var refreshNow: String { pick("Refresh now", "Jetzt aktualisieren") }
     public static var launchAtLogin: String { pick("Launch at login", "Beim Anmelden starten") }
     public static var quitZielzeit: String { pick("Quit Zielzeit", "Zielzeit beenden") }
+    /// `Updates`, not `Aktualisierungen`: `Jetzt aktualisieren` sits one line
+    /// above this in the same menu, and the two would read as variants of each
+    /// other. The loanword is what a German reader expects on this menu item.
+    public static var checkForUpdates: String { pick("Check for updates", "Nach Updates suchen") }
+    /// Disclosure, not decoration. Updates install silently, so this line is the
+    /// only place the app says that it does — and the version is what makes a
+    /// report of "I'm on 1.1 and you say 1.3" actionable at all.
+    public static func versionLine(_ version: String) -> String {
+        pick(
+            "Zielzeit \(version) · updates automatically",
+            "Zielzeit \(version) · aktualisiert sich automatisch"
+        )
+    }
     public static var couldNotChangeLoginItem: String {
         pick("Could not change the login item", "Login-Objekt konnte nicht geändert werden")
     }

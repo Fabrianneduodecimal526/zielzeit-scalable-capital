@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# Copy Sparkle.framework into an already-assembled app bundle and sign it.
+#
+#     Scripts/embed-sparkle Zielzeit.app
+#
+# Its own script rather than lines in the Makefile because `app` and
+# `release-app` both need it and it is eight steps, not one.
+set -eu
+
+APP="${1:?usage: Scripts/embed-sparkle <app-bundle>}"
+
+# The exact slice directory is named for the architectures in it, which differ
+# between a host build and a universal one, so it is found rather than spelled.
+FRAMEWORK=$(find .build/artifacts -type d -name Sparkle.framework -path '*macos*' -print | head -1)
+[ -n "$FRAMEWORK" ] || {
+    echo "error: no Sparkle.framework under .build/artifacts — run 'swift package resolve' first" >&2
+    exit 1
+}
+
+mkdir -p "$APP/Contents/Frameworks"
+rm -rf "$APP/Contents/Frameworks/Sparkle.framework"
+# ditto, not cp: the framework is a bundle of symlinked versions carrying its
+# own signature, the same reason the zip target uses ditto.
+ditto "$FRAMEWORK" "$APP/Contents/Frameworks/Sparkle.framework"
+
+# Inside-out, and never with --deep: Sparkle's own docs say --deep is wrong for
+# this, and a nested bundle signed after its container invalidates the container.
+#
+# No -o runtime either. Hardened runtime turns on library validation, which
+# requires a matching Team ID — and an ad-hoc signature has none, so the app
+# would refuse to load its own framework at launch.
+VERSIONS="$APP/Contents/Frameworks/Sparkle.framework/Versions/B"
+for item in \
+    "$VERSIONS/XPCServices/Installer.xpc" \
+    "$VERSIONS/XPCServices/Downloader.xpc" \
+    "$VERSIONS/Autoupdate" \
+    "$VERSIONS/Updater.app" \
+    "$APP/Contents/Frameworks/Sparkle.framework"
+do
+    [ -e "$item" ] || continue
+    codesign --force --sign - "$item"
+done
+
+echo "Embedded Sparkle into $APP"

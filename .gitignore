@@ -9,3 +9,10 @@ dist/
 # Copied from docs/ by `make site` and by the Pages workflow, never committed.
 site/img/
 .playwright-mcp/
+
+# Working notes from the Superpowers workflow: design specs, implementation
+# plans and the execution ledger. Local only. This repo is public and these are
+# scratch, not documentation — CLAUDE.md and CONTRIBUTING carry anything worth
+# keeping. They were committed once and scrubbed from history; keep them out.
+docs/superpowers/
+.superpowers/

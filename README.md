@@ -85,6 +85,11 @@ universal build, so it runs on Apple silicon and Intel, and you do not need Xcod
 2. Open Zielzeit from Applications. The first launch will be blocked. See below.
 3. Look for the progress ring in your menu bar.
 
+Zielzeit keeps itself up to date. Later versions install quietly in the background, so this is the
+only time you download anything; the new version takes effect the next time you quit and reopen
+Zielzeit. The `…` menu in the popover shows which version you are on, and `Check for updates` there
+asks immediately if you would rather not wait.
+
 Connecting it to your account then takes two Terminal commands and an email to Scalable Capital,
 which is [explained below](#one-terminal-step-you-cannot-avoid) and which the app walks you through.
 

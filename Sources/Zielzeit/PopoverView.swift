@@ -297,6 +297,12 @@ struct FooterView: View {
             Menu {
                 Button(Strings.setGoalEllipsis) { model.beginEditingGoal() }
                 Button(Strings.refreshNow) { model.refresh() }
+                // Absent in the capture modes, where no updater is built at all;
+                // the version line below is Sparkle-free and still renders.
+                if let updates = UpdateController.shared {
+                    Button(Strings.checkForUpdates) { updates.checkForUpdates() }
+                }
+                Text(Strings.versionLine(AppVersion.current))
                 Divider()
                 Menu(Strings.language) {
                     ForEach(LanguagePreference.allCases, id: \.self) { option in

@@ -102,8 +102,11 @@ app: build Zielzeit.icns ## Package Zielzeit.app
 	@cp $(BINARY) $(CONTENTS)/MacOS/Zielzeit
 	@cp Info.plist $(CONTENTS)/Info.plist
 	@cp Zielzeit.icns $(CONTENTS)/Resources/Zielzeit.icns
+	@# Sparkle goes in before the app is signed: signing the container first and
+	@# then adding a nested bundle invalidates the container's signature.
+	@Scripts/embed-sparkle $(APP)
 	@# Ad-hoc signature: enough to launch, and required before macOS will
-	@# consider the bundle for login-item registration.
+	@# consider the bundle for login-item registration. The app signs last.
 	@codesign --force --sign - --identifier com.zielzeit.Zielzeit $(APP)
 	@echo "Built $(APP)"
 
@@ -132,6 +135,8 @@ release-app: Zielzeit.icns
 	@cp $(UNIVERSAL) $(DIST)/$(APP)/Contents/MacOS/Zielzeit
 	@cp Info.plist $(DIST)/$(APP)/Contents/Info.plist
 	@cp Zielzeit.icns $(DIST)/$(APP)/Contents/Resources/Zielzeit.icns
+	@# Same as `app`: the framework goes in before the container is signed.
+	@Scripts/embed-sparkle $(DIST)/$(APP)
 	@# Ad-hoc, as everywhere else here: there is no Developer ID to sign with,
 	@# so the download is not notarized and macOS will ask the user to confirm
 	@# it once. The README explains that step; don't quietly drop the signature,
