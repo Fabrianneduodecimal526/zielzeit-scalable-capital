@@ -60,7 +60,10 @@ jobs:
       - name: Render harnesses
         run: |
           make shots
-          make ui
+          # `make ui` reads a goal and a portfolio, so it needs the demo CLI and a
+          # goal in the environment — there is neither a saved goal nor a session
+          # on a runner.
+          ZIELZEIT_SC_BIN=$PWD/Scripts/sc-demo ZIELZEIT_GOAL=250000 make ui
           for f in docs/popover.png docs/setup.png docs/menubar.png; do
             [ -s "$f" ] || { echo "::error::$f was not produced"; exit 1; }
           done
