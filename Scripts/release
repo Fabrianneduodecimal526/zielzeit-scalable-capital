@@ -173,6 +173,19 @@ gh pr create --base main --head "$WORK" \
 $(printf '%s\n' "${SUBJECTS[@]}" | sed 's/^/- /')" >/dev/null
 
 say "Waiting for CI"
+# `gh pr checks` exits non-zero when the pull request has no checks *yet*, and
+# GitHub takes a few seconds to register them after the push. So calling --watch
+# straight away loses a race and kills the release with "no checks reported" —
+# which is indistinguishable, in the output, from CI having actually failed. Wait
+# for at least one check to exist before watching.
+#
+# This is not hypothetical: it is exactly how the v1.2 attempt died. Nothing was
+# tagged, so it failed safely, but the bump branch and its PR were left behind to
+# be cleaned up by hand.
+for _ in $(seq 1 24); do
+    [ "$(gh pr checks "$WORK" --json name --jq 'length' 2>/dev/null || echo 0)" -gt 0 ] && break
+    sleep 5
+done
 gh pr checks "$WORK" --watch --interval 15 || fail "CI failed on the bump PR — nothing was tagged"
 
 say "Merging"
