@@ -18,7 +18,7 @@ jobs:
     name: Tests
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: swift --version
       - name: Build
         run: swift build --build-tests
@@ -29,7 +29,7 @@ jobs:
     name: App bundle and harnesses
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Catches packaging breakage — a missing Info.plist key, an icon that no
       # longer generates — which `swift test` cannot see.
@@ -72,7 +72,7 @@ jobs:
     name: No real account data
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Fixtures are shaped from real CLI responses, so it is genuinely easy to
       # paste a live one in. These are the shapes that would identify an account:
