@@ -651,6 +651,19 @@ anyone, which is the whole reason this shape was chosen over a launch ping.
   the app reads a brokerage account, and a reader who is nervous decides in the first screen. Reddit
   is where that was learned — the launch thread's objections were all about data and money, answered
   by a Safety section 190 lines down that nobody reached. Don't let features drift back above it.
+- **On the site the audit is proof, not the opening, and the two audiences differ.** The README is
+  read on GitHub and can be technical; the site is the front door for a Scalable investor who may not
+  be a developer. A first draft opened `#safety` with the raw seven-line terminal output and moved the
+  per-claim `grep` blocks nowhere: naming `URLSession` and `Keychain` before a nervous reader has read
+  a sentence makes the page look written for someone else, which pushes the way this section exists to
+  stop. So the visible layer is one line ("All seven checks passing", linking the CI run) and the
+  cards are plain prose; the command, the terminal output and the `-v` note live inside the
+  `Run the same check yourself` `<details>`. Don't promote it back out, and don't put commands back in
+  the cards.
+- **Card 3 no longer says "no networking code at all" full stop.** Sparkle does fetch the appcast, and
+  a reader who discovers that themselves has grounds to discount the rest of the page, so the card
+  names the update feed and says it carries nothing about them. Same rule as the `--local-read-only`
+  caveat: on this page an overclaim costs more than the claim is worth.
 - **`--local-read-only` is a local guard, and the README quotes Scalable on that** ("This does not
   change token permissions or backend access"). Overstating it as a backend restriction is the kind of
   claim a skeptic checks against their docs and then distrusts the whole page for. Same reason the

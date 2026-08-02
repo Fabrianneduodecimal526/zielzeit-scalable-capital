@@ -143,22 +143,39 @@
 <section class="band" id="safety">
   <div class="wrap">
     <p class="eyebrow">Safety</p>
-    <h2>Read-only, and checkable in one command</h2>
+    <h2>Read-only, and checked rather than promised</h2>
     <p class="sub sub--left">
-      Zielzeit can run exactly five commands against your broker, and none of them writes. Every claim
-      below comes with the command to check it yourself — or check all of them at once, in a fresh
-      clone, with nothing installed and no account:
+      Zielzeit can run exactly five commands against your broker, and none of them writes. You do not
+      have to take that on trust: each promise below is checked against the source code automatically,
+      every time anything changes.
     </p>
 
-    <!-- The audit output, verbatim from `Scripts/audit`. It sits above the cards
-         because it is the only thing here that is not this project describing
-         itself: the checks run on every push, and a reader can reproduce them
-         before deciding to download anything. -->
-    <div class="audit">
-      <pre class="audit__cmd"><code>git clone https://github.com/Mannafee/zielzeit-scalable-capital
+    <!-- The proof, in one line a non-developer can read, with the terminal output
+         one click behind it. An earlier draft opened this section with the raw
+         output: seven lines of monospace naming URLSession and Keychain, first
+         thing a nervous reader saw. It made a page about a brokerage account look
+         like it was written for someone else, which pushes the way this section
+         exists to stop. The audit belongs behind the plain words, not in front. -->
+    <p class="proof">
+      <span class="proof__tick" aria-hidden="true">✓</span>
+      <span>
+        <b>All seven checks passing</b> as of the latest change.
+        <a href="https://github.com/Mannafee/zielzeit-scalable-capital/actions/workflows/audit.yml">See
+        the latest run ↗</a>
+      </span>
+    </p>
+
+    <details class="reveal">
+      <summary>Run the same check yourself</summary>
+      <div class="reveal__body">
+        <p>
+          One command, in a copy of the source. It needs no Xcode, no account and no build, so you can
+          run it before you download anything.
+        </p>
+        <pre><code>git clone https://github.com/Mannafee/zielzeit-scalable-capital
 cd zielzeit-scalable-capital
 make audit</code></pre>
-      <pre class="audit__out"><code><b>Zielzeit audit</b>  — against Sources/, not against the README
+        <pre class="audit__out"><code><b>Zielzeit audit</b>  — against Sources/, not against the README
 
   <i>✓</i>  broker write commands        none   the only broker verbs are overview, savings-plans, transactions
   <i>✓</i>  broker commands enumerated   5      overview, savings-plans, transactions, whoami, installation-code
@@ -169,15 +186,15 @@ make audit</code></pre>
   <i>✓</i>  third-party dependencies     1      Sparkle, the updater — nothing else
 
 <b>7 of 7 checks passed.</b>  Re-run with -v for every search and its output.</code></pre>
-      <p class="audit__note">
-        Run it with <code>-v</code> and it prints every search it made, so a passing run is evidence
-        rather than a green tick.
-        <a href="https://github.com/Mannafee/zielzeit-scalable-capital/actions/workflows/audit.yml">The
-        same checks run on every push</a>, which is what stops this page drifting away from the code,
-        and <a href="https://github.com/Mannafee/zielzeit-scalable-capital/blob/main/SECURITY.md">SECURITY.md</a>
-        states what an audit cannot check — including the two things that are true and not reassuring.
-      </p>
-    </div>
+        <p>
+          Add <code>-v</code> and it prints every search it made, so a passing run is evidence rather
+          than a green tick. And
+          <a href="https://github.com/Mannafee/zielzeit-scalable-capital/blob/main/SECURITY.md">SECURITY.md</a>
+          states what no automated check can cover — including the two things that are true and not
+          reassuring.
+        </p>
+      </div>
+    </details>
 
     <div class="cards">
       <article>
@@ -188,9 +205,7 @@ make audit</code></pre>
           <path d="M3.4 20.6 20.6 3.4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
         </svg>
         <h3>It cannot trade, sell, or move money</h3>
-        <p>Five commands are enumerated in one Swift type, and every call site passes one of them. No shell is involved, so there is no string that could be made to mean something else.</p>
-        <pre><code>grep -A20 'enum Command' \
-  Sources/ZielzeitCore/ScalableClient.swift</code></pre>
+        <p>The five commands it may run are listed in one place in the code, and there is no route to a sixth. Signing in the way the setup asks also puts the session itself in read-only mode, so the command-line tool blocks every write — whether or not you trust this app.</p>
       </article>
       <article>
         <!-- A Terminal, not a slashed padlock: the point is that signing in
@@ -201,9 +216,7 @@ make audit</code></pre>
           <path d="M12.75 15.25h4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
         </svg>
         <h3>It never sees your password or your 2FA</h3>
-        <p>It never runs <span class="mono">sc login</span>. Signing in is an OAuth device-code flow you complete yourself — the app only opens Terminal with the command typed, not executed.</p>
-        <pre><code>sc login --local-read-only
-<span class="dim"># you run this, never the app</span></code></pre>
+        <p>You sign in yourself, in your own Terminal window, exactly as Scalable Capital asks. Zielzeit types the command in and stops there: it never runs it, never sees what you enter, and never touches the session afterwards.</p>
       </article>
       <article>
         <svg class="ico ico--card" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -211,9 +224,7 @@ make audit</code></pre>
           <path d="M3.6 20.4 20.4 3.6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
         </svg>
         <h3>Your data cannot leave your Mac</h3>
-        <p>No networking code at all: no <span class="mono">URLSession</span>, no sockets, no analytics, no telemetry, no account. The only outbound traffic is the official CLI talking to your broker.</p>
-        <pre><code>grep -rn 'URLSession' Sources/
-<span class="dim"># returns nothing</span></code></pre>
+        <p>There is no internet code in the app at all — no analytics, no tracking, no account to sign up for. Your figures go from the broker's own tool to the screen and no further. The one thing Zielzeit fetches is its own update feed, which carries nothing about you.</p>
       </article>
       <article>
         <!-- Exactly three rows, because the claim is exactly three values. -->
@@ -223,7 +234,6 @@ make audit</code></pre>
         </svg>
         <h3>It keeps three values, and no figures</h3>
         <p>Your goal amount, your language, and whether you have emailed for beta access. No balance, no holdings, no name — those are fetched, shown, and forgotten when the app quits.</p>
-        <pre><code>defaults read com.zielzeit.Zielzeit</code></pre>
       </article>
     </div>
 
@@ -243,7 +253,7 @@ make audit</code></pre>
           <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
         </svg>
         <h3>It is not sandboxed, and cannot be</h3>
-        <p>A sandboxed app cannot launch another program, and Zielzeit's whole job is to run the CLI you installed. What limits it is that it is small, open and readable end to end, not an OS boundary.</p>
+        <p>A sandboxed app cannot launch another program, and Zielzeit's whole job is to run the command-line tool you installed. What limits it is that it is small, open and readable end to end, not an OS boundary.</p>
       </div>
     </div>
   </div>
