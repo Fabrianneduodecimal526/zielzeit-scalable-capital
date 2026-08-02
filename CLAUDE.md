@@ -214,8 +214,9 @@ language mode by choice — strict concurrency buys nothing in a single-window m
 - `make shots` — regenerate the README images in `docs/` (always against `Scripts/sc-demo`, never a
   real account). **Scale is a correctness matter here, not a preference:** the README sets each image's
   display width in HTML, so the source must carry at least twice that in pixels or it reads soft on
-  every Retina screen. The popover is shown at 380px and was captured at 2× (688px = 1.8×), which is
-  why it looked blurry; it is `--scale 3` now, and the menu bar item `--scale 8`. Multiply, don't
+  every Retina screen. The popover was shown at 380px from a 2× capture (688px = 1.8×), which is why
+  it looked blurry; it is `--scale 4` now against a 480px display width, and the menu bar item
+  `--scale 8` against 260px. Multiply, don't
   guess: check `sips -g pixelWidth` against the `width=` in the README before shipping new images.
 - `make test`, `make run`, `make install`, `make help`
 
