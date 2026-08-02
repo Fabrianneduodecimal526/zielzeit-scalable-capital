@@ -29,12 +29,12 @@ unofficial APIs, no credentials — and turns your balance, savings plan and tra
 projected arrival year that sits in your menu bar.
 
 <p align="center">
-  <img src="docs/menubar.png" alt="Zielzeit in the macOS menu bar: a 17% progress ring, a green up caret and the projected year 2033" width="200"><br>
+  <img src="docs/menubar.png" alt="Zielzeit in the macOS menu bar: a 17% progress ring, a green up caret and the projected year 2033" width="260"><br>
   <em>17% of the way there, up on the week, projected to arrive in 2033.</em>
 </p>
 
 <p align="center">
-  <img src="docs/popover.png" alt="The Zielzeit popover: projected year 2033, a projection chart with three scenarios, and sliders for saving more and picking a target year" width="380">
+  <img src="docs/popover.png" alt="The Zielzeit popover: projected year 2033, a projection chart with three scenarios, and sliders for saving more and picking a target year" width="480">
 </p>
 
 <sub>Figures in every screenshot are synthetic demo data, not a real account.</sub>
@@ -127,7 +127,7 @@ can log in at all. That is a human round-trip that cannot be automated, so Zielz
 around it one tap.
 
 <p align="center">
-  <img src="docs/setup.png" alt="Zielzeit's onboarding checklist: install the CLI, request beta access, sign in" width="380">
+  <img src="docs/setup.png" alt="Zielzeit's onboarding checklist: install the CLI, request beta access, sign in" width="480">
 </p>
 
 1. **Install the CLI** — a copy button for
