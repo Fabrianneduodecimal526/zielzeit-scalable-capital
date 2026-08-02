@@ -1,0 +1,33 @@
+name: Audit
+
+# The security claims, checked against the source on every change.
+#
+# Its own workflow rather than a job in ci.yml, because the README carries its
+# badge: a reader deciding whether to trust the download should see a green check
+# that means "read-only, no networking, three values on disk" and not one that
+# also goes red when a screenshot harness breaks.
+#
+# Runs on ubuntu and needs no toolchain, no account and no secrets — the same
+# reason `make audit` works in a fresh clone.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Read-only and privacy claims
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Verbose, so the log is the evidence: every search and its output, which
+      # is what makes a passing run something a reader can inspect rather than
+      # another green tick to take on faith.
+      - name: Audit
+        run: Scripts/audit -v

@@ -1,0 +1,274 @@
+#!/bin/bash
+#
+# Check the security claims Zielzeit makes about itself, against the source.
+#
+#     Scripts/audit          # one line per check
+#     Scripts/audit -v       # also print every search and its output
+#     make audit
+#
+# The README answers "can this app trade, can it phone home, what does it keep"
+# in prose, with a grep under each answer. Nobody runs three greps. This runs
+# them all, names what it searched, and exits non-zero if any answer has stopped
+# being true — so the claims are enforced by CI rather than maintained by hand.
+#
+# Two rules for anything added here:
+#
+#   1. Every check searches Sources/ only. A pattern that also matched this file,
+#      the README or CLAUDE.md would pass because the documentation mentions the
+#      thing it promises not to do, which is the opposite of a check.
+#   2. A check states a fact a reader could verify by hand in a minute. This is
+#      not a linter and not a substitute for reading the code; it is the reading
+#      already done, reproducibly.
+
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+VERBOSE=0
+[ "${1:-}" = "-v" ] || [ "${1:-}" = "--verbose" ] && VERBOSE=1
+
+if [ -t 1 ]; then
+    GREEN=$'\033[32m'; RED=$'\033[31m'; DIM=$'\033[2m'; BOLD=$'\033[1m'; OFF=$'\033[0m'
+else
+    GREEN=''; RED=''; DIM=''; BOLD=''; OFF=''
+fi
+
+passed=0
+failed=0
+
+# A check's verdict. `pass NAME VALUE NOTE` / `fail NAME VALUE NOTE`, where VALUE
+# is what was counted so a reader can see the number the claim rests on.
+pass() {
+    passed=$((passed + 1))
+    printf '  %s✓%s  %-28s %-13s %s%s%s\n' "$GREEN" "$OFF" "$1" "$2" "$DIM" "$3" "$OFF"
+}
+
+fail() {
+    failed=$((failed + 1))
+    printf '  %s✗%s  %-28s %-13s %s\n' "$RED" "$OFF" "$1" "$2" "$3"
+    # GitHub Actions renders this as an annotation on the job.
+    [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error::audit: $1 — $3"
+    return 0
+}
+
+# In verbose mode, show the search itself, then whatever it found. The command is
+# printed even when it matched nothing, because "this is what I looked for and it
+# was not there" is the whole evidence for a negative claim.
+searched() {
+    [ "$VERBOSE" -eq 1 ] || return 0
+    printf '     %s$ %s%s\n' "$DIM" "$1" "$OFF"
+    if [ -n "${2:-}" ]; then
+        printf '%s\n' "$2" | sed "s/^/       /"
+    else
+        printf '     %s(no output)%s\n' "$DIM" "$OFF"
+    fi
+}
+
+printf '\n%sZielzeit audit%s  %s— against Sources/, not against the README%s\n\n' \
+    "$BOLD" "$OFF" "$DIM" "$OFF"
+
+CLIENT=Sources/ZielzeitCore/ScalableClient.swift
+
+# ── 1. No write commands ────────────────────────────────────────────────────
+#
+# Not a search for the word "trade": `sc broker trade` is two arguments, so the
+# thing to check is every place a `broker` subcommand is named, and that the verb
+# beside it is one of the three reads. A bare grep for the verbs would also match
+# the error handling, which looks for "login" in the CLI's *output* to tell a dead
+# session apart from a real failure — a check that fires on that gets loosened
+# until it means nothing.
+broker_lines=$(grep -rn '"broker"' --include='*.swift' Sources/ 2>/dev/null)
+verbs=$(printf '%s\n' "$broker_lines" | grep -oE '"broker", "[a-z-]+"' | sed 's/.*, "//;s/"//' | sort -u)
+searched "grep -rn '\"broker\"' --include='*.swift' Sources/" "$broker_lines"
+unexpected=$(printf '%s\n' "$verbs" | grep -vxE 'overview|savings-plans|transactions')
+if [ -z "$unexpected" ] && [ -n "$verbs" ]; then
+    pass "broker write commands" "none" "the only broker verbs are overview, savings-plans, transactions"
+else
+    fail "broker write commands" "$(printf '%s' "$unexpected" | grep -c .) found" \
+        "a broker subcommand that is not one of the three reads:"
+    printf '%s\n' "$unexpected" | sed 's/^/         /'
+fi
+
+# ── 2. The commands are enumerated, and there are five ─────────────────────
+#
+# Everything Zielzeit can ask the broker is a member of ScalableClient.Command.
+# Four are constant argument arrays; `transactions` is a function because it
+# takes a date and a cursor. Counting them is what makes "exactly five" a fact
+# rather than a sentence: add a sixth and this check reports six.
+#
+# The count alone would not be enough, so two more things are asserted: every
+# call site passes a `Command` member rather than an array of its own, and no
+# argument list is built literally anywhere else. That is what closes the gap
+# between "the enum holds five reads" and "five reads is all it can run".
+enum_body=$(awk '/^    enum Command \{/,/^    \}/' "$CLIENT")
+constants=$(printf '%s\n' "$enum_body" | grep -cE 'static let [a-zA-Z]+ = \["')
+functions=$(printf '%s\n' "$enum_body" | grep -cE 'static func [a-zA-Z]+\(')
+commands=$((constants + functions))
+searched "awk '/enum Command/,/^    }/' $CLIENT  # count argument-producing members" \
+    "$(printf '%s\n' "$enum_body" | grep -E 'static (let [a-zA-Z]+ = \["|func [a-zA-Z]+\()')"
+
+# The five, spelled as the CLI sees them. Each must appear in the enum, so a
+# rename that quietly widened the set cannot pass by keeping the count at five.
+missing=''
+for argv in '"broker", "overview"' '"broker", "savings-plans"' '"broker", "transactions"' \
+            '"whoami"' '"installation-code"'; do
+    printf '%s\n' "$enum_body" | grep -qF "$argv" || missing="$missing $argv"
+done
+
+# An argv assembled at a call site would bypass the enum entirely. There is one
+# `arguments:` parameter in this file and every caller passes `Command.something`;
+# a literal `arguments: ["..."]` anywhere is the thing that must not appear.
+literal_argv=$(grep -rn 'arguments: \["' --include='*.swift' Sources/ 2>/dev/null)
+call_sites=$(grep -c 'arguments: Command\.' "$CLIENT" 2>/dev/null)
+searched "grep -rn 'arguments: \[\"' --include='*.swift' Sources/  # argv built outside the enum" \
+    "$literal_argv"
+
+if [ "$commands" -eq 5 ] && [ -z "$missing" ] && [ -z "$literal_argv" ] && [ "$call_sites" -eq 5 ]; then
+    pass "broker commands enumerated" "5" \
+        "overview, savings-plans, transactions, whoami, installation-code"
+elif [ -n "$literal_argv" ]; then
+    fail "broker commands enumerated" "$commands" \
+        "an argument list is built outside Command, so the enum is no longer exhaustive:"
+    printf '%s\n' "$literal_argv" | sed 's/^/         /'
+elif [ -n "$missing" ]; then
+    fail "broker commands enumerated" "$commands" "these are no longer present:$missing"
+else
+    fail "broker commands enumerated" "$commands" \
+        "the enum no longer holds exactly five commands — read it, then update this check and the README"
+fi
+
+# ── 3. No networking of its own ─────────────────────────────────────────────
+#
+# The claim is not "it only talks to Scalable", it is that the app contains no
+# code that can open a connection at all. The only traffic on the machine is the
+# official CLI, run as a subprocess, exactly as it behaves from a shell. So there
+# is no analytics, no crash reporter and no update ping to audit — except one:
+# Sparkle fetches the appcast, which is a GitHub URL in Info.plist, not code
+# here, and the README says so.
+NET='URLSession|URLRequest|NSURLConnection|import Network|NWConnection|NWBrowser|CFSocket|CFStream|Socket\(|getaddrinfo|CFHTTP'
+hits=$(grep -rnE "$NET" --include='*.swift' Sources/ 2>/dev/null)
+searched "grep -rnE '$NET' --include='*.swift' Sources/" "$hits"
+if [ -z "$hits" ]; then
+    pass "networking code" "none" "no URLSession, Network.framework or socket API in the app"
+else
+    fail "networking code" "$(printf '%s\n' "$hits" | wc -l | tr -d ' ') found" \
+        "the app can open a connection of its own:"
+    printf '%s\n' "$hits" | sed 's/^/         /'
+fi
+
+# ── 4. The CLI is run by path, with an argument array, and no shell ─────────
+#
+# A command assembled into a string and handed to a shell is the bug class that
+# turns a read-only tool into anything at all: one stray quote or semicolon in a
+# value and the argument becomes a second command. Zielzeit sets executableURL to
+# an absolute path and passes [String]; there is no interpreter in between, so
+# there is no string for a value to break out of.
+# `system\(` is deliberately absent from this list: SwiftUI's `.system(size:)`
+# font is on nearly every view, so the pattern that would catch C's `system()`
+# matches thirty innocent lines and gets deleted. `Darwin.system` is the spelling
+# that would actually compile here, and `posix_spawn`/`execv` cover the rest.
+SHELLISH='/bin/sh|/bin/bash|/bin/zsh|/usr/bin/env|NSUserUnixTask|Darwin\.system|posix_spawn|execv|NSAppleScript.*do shell'
+hits=$(grep -rnE "$SHELLISH" --include='*.swift' Sources/ 2>/dev/null)
+launches=$(grep -rn 'Process()' --include='*.swift' Sources/ 2>/dev/null)
+launch_count=$(printf '%s' "$launches" | grep -c . )
+searched "grep -rnE '$SHELLISH' --include='*.swift' Sources/" "$hits"
+searched "grep -rn 'Process()' --include='*.swift' Sources/" "$launches"
+if [ -z "$hits" ] && [ "$launch_count" -eq 1 ] \
+   && grep -q 'process.executableURL = URL(fileURLWithPath: executablePath)' "$CLIENT" \
+   && grep -q 'process.arguments = arguments' "$CLIENT"; then
+    pass "shell invocation" "none" \
+        "one Process(), run by absolute path with an argument array"
+elif [ -n "$hits" ]; then
+    fail "shell invocation" "$(printf '%s\n' "$hits" | wc -l | tr -d ' ') found" \
+        "something runs through an interpreter:"
+    printf '%s\n' "$hits" | sed 's/^/         /'
+else
+    fail "shell invocation" "$launch_count Process()" \
+        "the single by-path launch in $CLIENT is no longer the only one, or no longer by path"
+fi
+
+# ── 5. No route to credentials ──────────────────────────────────────────────
+#
+# Zielzeit never runs `sc login` (checked above), and it also never goes looking
+# for what login left behind: no Keychain item, and no read of the CLI's own
+# session on disk. Signing in is the user's, in their Terminal, and the session
+# it stores is the CLI's business.
+# API symbols and file paths, not the words. The strings table says "Zielzeit
+# never handles your credentials" and the setup screen names the login command,
+# so a pattern matching `credentials` or `password` flags the very sentences that
+# make the promise. What a credential read would need is the Keychain API or the
+# CLI's session on disk.
+SECRETS='SecItem|SecKeychain|kSecClass|kSecAttr|LAContext|\.scalable/|scalable-cli/|refresh_token|access_token|id_token'
+hits=$(grep -rnE "$SECRETS" --include='*.swift' Sources/ 2>/dev/null)
+searched "grep -rnE '$SECRETS' --include='*.swift' Sources/" "$hits"
+if [ -z "$hits" ]; then
+    pass "credential access" "none" "no Keychain, no token, no read of the CLI's session"
+else
+    fail "credential access" "$(printf '%s\n' "$hits" | wc -l | tr -d ' ') found" \
+        "something reaches for a credential:"
+    printf '%s\n' "$hits" | sed 's/^/         /'
+fi
+
+# ── 6. Three values on disk, and none of them a figure ─────────────────────
+#
+# The balance, the holdings and the transactions are fetched, shown and dropped
+# when the app quits. What persists is the goal you typed, the language you
+# picked and whether you have sent the access email. Every key is a `Key` enum
+# member, so they can be counted; a fourth would have to be added here too.
+key_defs=$(grep -rn -A3 'private enum Key {' --include='*.swift' Sources/ \
+           | grep -oE 'static let [a-zA-Z]+ = "[a-zA-Z]+"')
+key_count=$(printf '%s' "$key_defs" | grep -c .)
+searched "grep -rn -A3 'private enum Key {' --include='*.swift' Sources/" "$key_defs"
+if [ "$key_count" -eq 3 ] \
+   && printf '%s\n' "$key_defs" | grep -q '"goal"' \
+   && printf '%s\n' "$key_defs" | grep -q '"language"' \
+   && printf '%s\n' "$key_defs" | grep -q '"hasRequestedAccess"'; then
+    pass "values stored on disk" "3" "goal, language, hasRequestedAccess — no figures"
+else
+    fail "values stored on disk" "$key_count" \
+        "the persisted keys are no longer exactly goal, language and hasRequestedAccess"
+fi
+
+# ── 7. One dependency ───────────────────────────────────────────────────────
+#
+# Every third-party package is code the reader has to trust as well, so the count
+# is part of the claim. There is one, and it is the updater: without it a user
+# who installed v1.0 runs v1.0 forever.
+deps=$(grep -nE '^\s*\.package\(' Package.swift)
+dep_count=$(printf '%s' "$deps" | grep -c .)
+searched "grep -nE '^\s*\.package\(' Package.swift" "$deps"
+if [ "$dep_count" -eq 1 ] && printf '%s\n' "$deps" | grep -q 'sparkle-project/Sparkle'; then
+    pass "third-party dependencies" "1" "Sparkle, the updater — nothing else"
+else
+    fail "third-party dependencies" "$dep_count" "the dependency list is no longer Sparkle alone:"
+    printf '%s\n' "$deps" | sed 's/^/         /'
+fi
+
+# ── Disclosure ──────────────────────────────────────────────────────────────
+#
+# Not a check, and deliberately printed next to the passes: the app does launch
+# one other program, and an audit that only listed reassurances would be the kind
+# a reader is right to distrust. Terminal, via AppleScript, to type the login
+# command in without running it — the one place the app touches something outside
+# itself, and the reason it is not sandboxed.
+script_hits=$(grep -rn 'NSAppleScript' --include='*.swift' Sources/ | wc -l | tr -d ' ')
+printf '\n  %sⓘ  also true, and not a pass:%s\n' "$BOLD" "$OFF"
+printf '     %sZielzeit brings up Terminal (%s AppleScript in SetupView.swift) to type\n' \
+    "$DIM" "$script_hits"
+printf '     `sc login --local-read-only` into it — typed, never executed, so you run\n'
+printf '     the login yourself. That is also why it cannot be sandboxed: a sandboxed\n'
+printf '     app may not launch another program, and running the CLI is its whole job.%s\n' "$OFF"
+
+total=$((passed + failed))
+printf '\n'
+if [ "$failed" -eq 0 ]; then
+    printf '%s%d of %d checks passed.%s' "$GREEN" "$passed" "$total" "$OFF"
+    [ "$VERBOSE" -eq 0 ] && printf '  %sRe-run with -v for every search and its output.%s' "$DIM" "$OFF"
+    printf '\n\n'
+    exit 0
+else
+    printf '%s%d of %d checks failed.%s A claim in the README no longer matches the source:\n' \
+        "$RED" "$failed" "$total" "$OFF"
+    printf 'fix the code, or fix the claim — but do not loosen the check to make this pass.\n\n'
+    exit 1
+fi

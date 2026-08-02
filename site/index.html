@@ -28,8 +28,8 @@
       <span>Zielzeit</span>
     </a>
     <nav class="nav__links" aria-label="Sections">
-      <a href="#features">Features</a>
       <a href="#safety">Safety</a>
+      <a href="#features">Features</a>
       <a href="#setup">Setup</a>
       <a href="https://github.com/Mannafee/zielzeit-scalable-capital">GitHub</a>
     </nav>
@@ -140,73 +140,44 @@
   </div>
 </section>
 
-<section class="band" id="features">
-  <div class="wrap">
-    <p class="eyebrow">Features</p>
-    <h2>A year you can see without opening anything</h2>
-
-    <div class="row">
-      <div class="row__text">
-        <h3>Three scenarios on one chart</h3>
-        <p>Cautious at 3%, moderate at 6%, and your own pace: the return your portfolio actually achieved over the trailing year, measured with the <a href="https://en.wikipedia.org/wiki/Simple_Dietz_method">simple Dietz method</a>. Each curve stops where it meets the goal.</p>
-        <p>The headline uses your pace, not a house assumption, so the year moves with how you are actually doing.</p>
-      </div>
-      <div class="row__art">
-        <div class="frame frame--chart">
-          <img src="img/popover.png" width="344" alt="The projection chart with three curves, and the scenario list showing cautious 3.0% arriving 2042, moderate 6.0% arriving 2039, and your pace 19.7% arriving 2033">
-        </div>
-      </div>
-    </div>
-
-    <div class="row row--flip">
-      <div class="row__text">
-        <h3>Two what-if sliders, both ways round</h3>
-        <p><em>Save more</em> previews what another €200 a month does to every projection, live, without changing anything in your broker.</p>
-        <p><em>Reach by</em> inverts it: pick a year, get the monthly contribution that lands on it.</p>
-      </div>
-      <div class="row__art">
-        <div class="frame frame--sliders">
-          <img src="img/popover.png" width="344" alt="The two sliders: save more, currently €500 a month, and reach by, showing €446 a month for the end of 2033" loading="lazy">
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="row__text">
-        <h3>Measured, not guessed</h3>
-        <p>Your contributions are walked from a year of real transactions, not inferred from today's savings plan rate. On a live account that difference was over a full percentage point.</p>
-        <p>Inflation is on screen too: the goal restated in today's money, not hidden behind a toggle.</p>
-      </div>
-      <div class="row__art">
-        <div class="frame frame--facts">
-          <img src="img/popover.png" width="344" alt="The portfolio facts: portfolio €42 350,18, saving €500,00 a month across two plans with a 5% yearly step-up, and past year +€6 480,72" loading="lazy">
-        </div>
-      </div>
-    </div>
-
-    <div class="row row--flip">
-      <div class="row__text">
-        <h3>English and German</h3>
-        <p>Picked from your Mac's language and switchable in the app. Amounts follow it too: <span class="mono">€250 000</span> in English, <span class="mono">250 000 €</span> in German.</p>
-      </div>
-      <div class="row__art">
-        <div class="frame frame--hero">
-          <img src="img/popover-de.png" width="344" alt="The same popover in German: Prognose 2033, In 7,1 Jahren hast du etwa 250 000 €" loading="lazy">
-        </div>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<section class="band band--alt" id="safety">
+<section class="band" id="safety">
   <div class="wrap">
     <p class="eyebrow">Safety</p>
-    <h2>Read-only, and checkable in a few minutes</h2>
+    <h2>Read-only, and checkable in one command</h2>
     <p class="sub sub--left">
       Zielzeit can run exactly five commands against your broker, and none of them writes. Every claim
-      below comes with the command to check it yourself.
+      below comes with the command to check it yourself — or check all of them at once, in a fresh
+      clone, with nothing installed and no account:
     </p>
+
+    <!-- The audit output, verbatim from `Scripts/audit`. It sits above the cards
+         because it is the only thing here that is not this project describing
+         itself: the checks run on every push, and a reader can reproduce them
+         before deciding to download anything. -->
+    <div class="audit">
+      <pre class="audit__cmd"><code>git clone https://github.com/Mannafee/zielzeit-scalable-capital
+cd zielzeit-scalable-capital
+make audit</code></pre>
+      <pre class="audit__out"><code><b>Zielzeit audit</b>  — against Sources/, not against the README
+
+  <i>✓</i>  broker write commands        none   the only broker verbs are overview, savings-plans, transactions
+  <i>✓</i>  broker commands enumerated   5      overview, savings-plans, transactions, whoami, installation-code
+  <i>✓</i>  networking code              none   no URLSession, Network.framework or socket API in the app
+  <i>✓</i>  shell invocation             none   one Process(), run by absolute path with an argument array
+  <i>✓</i>  credential access            none   no Keychain, no token, no read of the CLI's session
+  <i>✓</i>  values stored on disk        3      goal, language, hasRequestedAccess — no figures
+  <i>✓</i>  third-party dependencies     1      Sparkle, the updater — nothing else
+
+<b>7 of 7 checks passed.</b>  Re-run with -v for every search and its output.</code></pre>
+      <p class="audit__note">
+        Run it with <code>-v</code> and it prints every search it made, so a passing run is evidence
+        rather than a green tick.
+        <a href="https://github.com/Mannafee/zielzeit-scalable-capital/actions/workflows/audit.yml">The
+        same checks run on every push</a>, which is what stops this page drifting away from the code,
+        and <a href="https://github.com/Mannafee/zielzeit-scalable-capital/blob/main/SECURITY.md">SECURITY.md</a>
+        states what an audit cannot check — including the two things that are true and not reassuring.
+      </p>
+    </div>
 
     <div class="cards">
       <article>
@@ -275,6 +246,65 @@
         <p>A sandboxed app cannot launch another program, and Zielzeit's whole job is to run the CLI you installed. What limits it is that it is small, open and readable end to end, not an OS boundary.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="band band--alt" id="features">
+  <div class="wrap">
+    <p class="eyebrow">Features</p>
+    <h2>A year you can see without opening anything</h2>
+
+    <div class="row">
+      <div class="row__text">
+        <h3>Three scenarios on one chart</h3>
+        <p>Cautious at 3%, moderate at 6%, and your own pace: the return your portfolio actually achieved over the trailing year, measured with the <a href="https://en.wikipedia.org/wiki/Simple_Dietz_method">simple Dietz method</a>. Each curve stops where it meets the goal.</p>
+        <p>The headline uses your pace, not a house assumption, so the year moves with how you are actually doing.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--chart">
+          <img src="img/popover.png" width="344" alt="The projection chart with three curves, and the scenario list showing cautious 3.0% arriving 2042, moderate 6.0% arriving 2039, and your pace 19.7% arriving 2033">
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--flip">
+      <div class="row__text">
+        <h3>Two what-if sliders, both ways round</h3>
+        <p><em>Save more</em> previews what another €200 a month does to every projection, live, without changing anything in your broker.</p>
+        <p><em>Reach by</em> inverts it: pick a year, get the monthly contribution that lands on it.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--sliders">
+          <img src="img/popover.png" width="344" alt="The two sliders: save more, currently €500 a month, and reach by, showing €446 a month for the end of 2033" loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="row__text">
+        <h3>Measured, not guessed</h3>
+        <p>Your contributions are walked from a year of real transactions, not inferred from today's savings plan rate. On a live account that difference was over a full percentage point.</p>
+        <p>Inflation is on screen too: the goal restated in today's money, not hidden behind a toggle.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--facts">
+          <img src="img/popover.png" width="344" alt="The portfolio facts: portfolio €42 350,18, saving €500,00 a month across two plans with a 5% yearly step-up, and past year +€6 480,72" loading="lazy">
+        </div>
+      </div>
+    </div>
+
+    <div class="row row--flip">
+      <div class="row__text">
+        <h3>English and German</h3>
+        <p>Picked from your Mac's language and switchable in the app. Amounts follow it too: <span class="mono">€250 000</span> in English, <span class="mono">250 000 €</span> in German.</p>
+      </div>
+      <div class="row__art">
+        <div class="frame frame--hero">
+          <img src="img/popover-de.png" width="344" alt="The same popover in German: Prognose 2033, In 7,1 Jahren hast du etwa 250 000 €" loading="lazy">
+        </div>
+      </div>
+    </div>
+
   </div>
 </section>
 

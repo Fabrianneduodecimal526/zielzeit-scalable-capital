@@ -1,7 +1,9 @@
 name: CI
 
 # Runs on every push and pull request. Three jobs, each guarding something a
-# contributor can plausibly break without noticing locally.
+# contributor can plausibly break without noticing locally. The read-only and
+# privacy claims are checked by their own workflow (audit.yml) rather than a job
+# here, so the badge in the README reports that one thing and nothing else.
 on:
   push:
     branches: [main]

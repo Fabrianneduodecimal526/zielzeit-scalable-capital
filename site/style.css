@@ -443,6 +443,46 @@ pre {
 pre code { font: 12.5px/1.65 var(--mono); color: var(--ink); white-space: pre; }
 .dim { color: var(--muted); }
 
+/* ── The audit block ───────────────────────────────────────────
+   A terminal, not a card: this is the one thing on the page a reader can
+   reproduce, so it should look like the thing they would run rather than like
+   more marketing. Dark, alone on an otherwise light page: a pale "terminal" reads
+   as a quotation of one, and the tick colour needs a dark ground to carry.
+   The output is 104 characters at its widest and will not fold, so it scrolls
+   inside its own box and the page body never does. ── */
+.audit { margin: 28px 0 44px; }
+.audit__cmd {
+  background: var(--alt);
+  border-color: var(--line);
+}
+.audit__out {
+  margin-top: 12px;
+  background: #10201a;
+  border-color: #1d3a2f;
+  color: #d7e4de;
+}
+.audit__out code { color: #d7e4de; }
+.audit__out b { color: #fff; font-weight: 600; }
+.audit__out i { color: #4ede9e; font-style: normal; font-weight: 700; }
+.audit__note {
+  margin: 14px 0 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.audit__note code {
+  font: 13px/1 var(--mono);
+  background: var(--alt);
+  border: 1px solid var(--line-2);
+  border-radius: 5px;
+  padding: 2px 5px;
+}
+@media (max-width: 720px) {
+  /* Small enough that 104 columns is a long horizontal scroll either way; the
+     smaller type keeps the shape of the table legible while it scrolls. */
+  .audit__out code { font-size: 11px; }
+}
+
 .callouts { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 44px; margin-top: 40px; }
 /* Icon and heading share the first row; the paragraph spans beneath both. */
 .callouts > div { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; align-items: center; }

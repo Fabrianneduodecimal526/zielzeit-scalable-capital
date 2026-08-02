@@ -18,7 +18,7 @@ UNIVERSAL := .build/apple/Products/Release/Zielzeit
 STATE ?= ready
 
 .DEFAULT_GOAL := help
-.PHONY: help build test once ui shots icon icons open app run install uninstall clean \
+.PHONY: help build test audit once ui shots icon icons open app run install uninstall clean \
         release release-app dmg zip site
 
 help: ## Show available targets
@@ -29,6 +29,12 @@ build: ## Compile in release mode
 
 test: ## Run the unit tests
 	swift test
+
+audit: ## Check the read-only and privacy claims against the source (AUDIT_ARGS=-v)
+	@# Needs no toolchain and no account: it reads Sources/ and Package.swift, so
+	@# anyone deciding whether to trust the download can run it straight from a
+	@# clone before building anything.
+	@Scripts/audit $(AUDIT_ARGS)
 
 once: ## Print the report as text (fast way to check the numbers)
 	swift run Zielzeit --once

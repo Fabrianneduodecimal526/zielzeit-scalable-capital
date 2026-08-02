@@ -293,6 +293,7 @@ the device.**
   **A single PNG at exactly 2× is the whole technique.** The
   `srcset` GitHub allows is only on `<source>` inside `<picture>`, and only the `prefers-color-scheme`
   form is documented, so density variants are not a route here.
+- `make audit [AUDIT_ARGS=-v]`: check the security claims against the source (`Scripts/audit`)
 - `make test`, `make run`, `make install`, `make help`
 - `Scripts/release [VERSION|major|minor|patch] [--dry-run]`: cut a release — bump, PR, merge, tag,
   and verify the published downloads. **Never do those steps by hand**: v1.1 shipped with an empty
@@ -627,4 +628,32 @@ anyone, which is the whole reason this shape was chosen over a launch ping.
 - Never invoke `sc broker trade ...` or any write command. This project is strictly read-only against
   the broker, and `ScalableClient.Command` enumerates the only five commands it may run: `broker
   overview`, `broker savings-plans`, `broker transactions`, `whoami`, `installation-code`.
+- **`Scripts/audit` is what makes that constraint enforced rather than stated**, and it is the reason
+  the README, `SECURITY.md` and the site can print those claims as facts. Seven checks, run by
+  `make audit` and by their own CI workflow (separate from `ci.yml` so the README badge means this one
+  thing): no broker verb outside the three reads, five commands enumerated with no argv built at a
+  call site, no networking API, one `Process()` run by absolute path with an argument array, no
+  Keychain or token, exactly three `UserDefaults` keys, one dependency. Two rules for it: **every
+  search is scoped to `Sources/`**, since a pattern that also matched the README or CLAUDE.md would
+  pass on the strength of the promise instead of the code; and **patterns match API symbols, not
+  words** — `system\(` hits SwiftUI's `.system(size:)` on nearly every view, `"login"` hits the error
+  handling that looks for it in the CLI's *output*, and `credentials` hits the strings table sentence
+  promising there are none. A check that fires on those gets loosened until it means nothing, which is
+  worse than no check. Every one was verified in both directions when written: inject the violation,
+  see it fail, revert.
+- **The audit prints one thing that is not a pass, and that placement is deliberate.** The app does
+  launch Terminal, via a single `NSAppleScript` in `SetupView.swift`, to type the login command
+  without running it. Listing it beside the ticks is what makes the ticks worth reading; an audit
+  that only published good properties earns less trust, not more. Same reasoning as the "not
+  sandboxed" card, which stays.
+- **Safety comes before features** in both the README and the site (`#safety` above `#features`, the
+  tinted `band--alt` moved with the swap so the bands still alternate). This is not cosmetic ordering:
+  the app reads a brokerage account, and a reader who is nervous decides in the first screen. Reddit
+  is where that was learned — the launch thread's objections were all about data and money, answered
+  by a Safety section 190 lines down that nobody reached. Don't let features drift back above it.
+- **`--local-read-only` is a local guard, and the README quotes Scalable on that** ("This does not
+  change token permissions or backend access"). Overstating it as a backend restriction is the kind of
+  claim a skeptic checks against their docs and then distrusts the whole page for. Same reason the
+  login and flag links point at Scalable's own README rather than paraphrasing it: every other trust
+  signal here is self-issued.
 - Ask the user before installing anything on their machine or creating files outside this repo.
