@@ -37,6 +37,13 @@ out a projected arrival year and keeps it in your menu bar.
   <img src="docs/popover.png" alt="The Zielzeit popover: projected year 2033, a projection chart with three scenarios, and sliders for saving more and picking a target year" width="344">
 </p>
 
+Zielzeit speaks **English and German**, picked from your Mac's language and switchable in the app.
+The same popover, in German:
+
+<p align="center">
+  <img src="docs/popover-de.png" alt="The same Zielzeit popover in German: Prognose 2033, In 7,1 Jahren hast du etwa 250 000 €, with the scenarios Vorsichtig, Moderat and Dein Tempo" width="344">
+</p>
+
 <sub>Figures in every screenshot are synthetic demo data, not a real account.</sub>
 
 ## What it does
@@ -129,6 +136,13 @@ around it one tap.
   <img src="docs/setup.png" alt="Zielzeit's onboarding checklist: install the CLI, request beta access, sign in" width="344">
 </p>
 
+<details>
+<summary>Auf Deutsch</summary>
+<p align="center">
+  <img src="docs/setup-de.png" alt="The same onboarding checklist in German: Scalable CLI installieren, Beta-Zugang anfragen, Anmelden" width="344">
+</p>
+</details>
+
 1. **Install the CLI.** A copy button for `brew tap ScalableCapital/tap && brew install scalable-cli`.
 2. **Request beta access.** Zielzeit reads your installation code, and the Request access button
    opens a prefilled email to `cli.beta@scalable.capital`. Nothing to compose.
@@ -139,8 +153,8 @@ around it one tap.
 3. **Sign in.** Run `sc login --local-read-only` yourself in Terminal. Zielzeit shows the command and
    can open Terminal with it typed but not executed.
 
-Then set your goal. `100000`, `100.000`, `€100 000` and `100k` all parse. Amounts follow your system
-locale, so a German-locale Mac shows `€42 350,18`.
+Then set your goal. `100000`, `100.000`, `€100 000` and `100k` all parse. In German, amounts are
+written the German way, with the symbol after the number: `42 350,18 €`.
 
 ### Three things Zielzeit will not do
 
@@ -227,6 +241,9 @@ make help     # every target
 One rule matters more than the rest: all arithmetic lives in `ZielzeitCore` and all UI in `Zielzeit`.
 No `import SwiftUI` in the core, no math in the views. That split is what makes the projections
 testable and the harnesses possible.
+
+If Zielzeit is useful to you, a ⭐ on the repository is the cheapest way to say so, and it is what
+helps other Scalable Capital investors find it.
 
 ## Disclaimer
 

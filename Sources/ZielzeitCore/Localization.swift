@@ -22,16 +22,18 @@ public enum AppLanguage: String, CaseIterable, Sendable {
     public static var current: AppLanguage = .english
 
     /// The language the device asks for, or English when it asks for neither.
-    ///
-    /// `ZIELZEIT_LANG` overrides it, in the same spirit as `ZIELZEIT_GOAL` and
-    /// `ZIELZEIT_SC_BIN`: it is how a German popover gets rendered from a Mac set
-    /// to English, which is the only way to review the German layout at all.
     public static var detected: AppLanguage {
-        if let forced = ProcessInfo.processInfo.environment["ZIELZEIT_LANG"],
-           let language = match(forced) {
-            return language
+        preferred(from: Locale.preferredLanguages)
+    }
+
+    /// How the language is named in its own language, which is how every language
+    /// picker worth using names them: a reader who has landed in the wrong one
+    /// cannot read the list if it is written in the language they cannot read.
+    public var endonym: String {
+        switch self {
+        case .english: return "English"
+        case .german: return "Deutsch"
         }
-        return preferred(from: Locale.preferredLanguages)
     }
 
     /// First supported language in a preference list, matched on the language
@@ -68,6 +70,82 @@ public enum AppLanguage: String, CaseIterable, Sendable {
         case .english: return .current
         case .german: return Locale(identifier: "de_DE")
         }
+    }
+}
+
+/// What the reader has chosen in the menu.
+///
+/// `system` is a real third option rather than the absence of a choice: it means
+/// "keep following the Mac", so a user who moves their Mac to German gets a
+/// German Zielzeit without going back into the menu. Storing the resolved
+/// language instead would silently freeze that.
+public enum LanguagePreference: String, CaseIterable, Sendable {
+    case system
+    case english = "en"
+    case german = "de"
+
+    /// The language this pins, or `nil` for "whatever the device says".
+    public var language: AppLanguage? {
+        switch self {
+        case .system: return nil
+        case .english: return .english
+        case .german: return .german
+        }
+    }
+
+    public init(language: AppLanguage) {
+        self = language == .german ? .german : .english
+    }
+}
+
+/// Persistence for the language choice, in the same defaults domain as the goal.
+public struct LanguageStore {
+
+    private enum Key {
+        static let language = "language"
+    }
+
+    private let defaults: UserDefaults
+    private let environment: [String: String]
+
+    public init(
+        defaults: UserDefaults? = nil,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) {
+        self.defaults = defaults ?? Defaults.shared()
+        self.environment = environment
+    }
+
+    /// What the reader picked. Unset — and anything unrecognised, such as a value
+    /// left behind by a future version — reads as `system`.
+    public var preference: LanguagePreference {
+        guard let raw = defaults.string(forKey: Key.language) else { return .system }
+        return LanguagePreference(rawValue: raw) ?? .system
+    }
+
+    public func setPreference(_ preference: LanguagePreference) {
+        // Removed rather than stored as "system", so following the device is the
+        // absence of a setting and a future rename of the sentinel cannot strand
+        // anyone in a language they did not choose.
+        if preference == .system {
+            defaults.removeObject(forKey: Key.language)
+        } else {
+            defaults.set(preference.rawValue, forKey: Key.language)
+        }
+    }
+
+    /// The language to run in: the environment override first, then the reader's
+    /// choice, then the device.
+    ///
+    /// `ZIELZEIT_LANG` outranks the stored preference deliberately — it exists to
+    /// render a language on demand for screenshots and review, and a setting saved
+    /// on the developer's own Mac must not defeat that.
+    public var resolved: AppLanguage {
+        if let forced = environment["ZIELZEIT_LANG"],
+           let language = LanguagePreference(rawValue: forced.lowercased())?.language {
+            return language
+        }
+        return preference.language ?? .detected
     }
 }
 
@@ -339,6 +417,13 @@ public enum Strings {
             "\(window) — klicken für einen anderen Zeitraum"
         )
     }
+
+    // MARK: - Language menu
+
+    /// Names of the languages themselves come from `AppLanguage.endonym`, so the
+    /// list stays readable to someone who has landed in the wrong one.
+    public static var language: String { pick("Language", "Sprache") }
+    public static var systemLanguage: String { pick("System", "System") }
 
     // MARK: - Menu bar
 

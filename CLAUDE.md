@@ -210,8 +210,26 @@ language mode by choice, since strict concurrency buys nothing in a single-windo
 
 ### Language
 
-English and German, chosen from the device. `AppLanguage.current` is the one switch, and
-`Strings` in `ZielzeitCore` is the one table; nothing outside it holds display text.
+English and German. `AppLanguage.current` is the one switch, and `Strings` in `ZielzeitCore` is the
+one table; nothing outside it holds display text. The language is resolved once in `main`, by
+`LanguageStore.resolved`, in a fixed order: **`ZIELZEIT_LANG`, then the reader's stored choice, then
+the device.**
+
+- **`.system` is a real third option, not the absence of one.** It means "keep following the Mac", so
+  moving the Mac to German moves Zielzeit with it. Storing the resolved language instead would
+  silently freeze that, which is why picking it *removes* the key rather than writing a sentinel.
+  An unrecognised stored value — one left by a future version — also reads as `.system`.
+- **The env override outranks the stored choice on purpose.** It exists to render a language on
+  demand for `make ui`/`make shots`, and a preference saved on the developer's own Mac must not
+  defeat it.
+- **`AppModel.languagePreference` is what makes a change visible.** The strings are computed
+  properties on `Strings` with nothing for SwiftUI to observe, so `PopoverView` hangs its `.id` on
+  the preference to rebuild the tree and `StatusItemController.observeTitle` tracks it to redraw the
+  status item. Drop either and half the labels stay in the previous language until the next fetch.
+- The picker is in both the footer's `…` menu and the status item's right-click menu — if the app
+  has come up in a language the reader cannot follow, the popover is the harder of the two to
+  navigate. Languages name themselves (`AppLanguage.endonym`: `English`, `Deutsch`) and only
+  "System" is translated, for the same reason.
 
 - **No `.lproj` bundles, deliberately.** This package ships no resources at all — the icons are
   drawn in code and the app bundle is assembled by hand in the Makefile — so `Bundle.module` would
@@ -222,8 +240,9 @@ English and German, chosen from the device. `AppLanguage.current` is the one swi
   direction is what keeps the 229 English test assertions deterministic without every test file
   pinning a language, and only the app has a device to ask. `LocalizationTests` sets it and restores
   it in a `defer`, since it is process-wide.
-- `ZIELZEIT_LANG=de` overrides detection, in the same spirit as `ZIELZEIT_GOAL`. It is the only way
-  to review the German layout from a Mac set to English, so `make ui`/`make shots` take it too.
+- `ZIELZEIT_LANG=de` is the only way to review the German layout from a Mac set to English, so
+  `make ui`/`make shots` take it too. Clear a test residue with
+  `defaults delete com.zielzeit.Zielzeit language`.
 - `CFBundleLocalizations` in `Info.plist` is declared even though there are no `.lproj` folders: it
   is what lists Zielzeit in System Settings › Language & Region › Applications, and that picker
   works by writing `AppleLanguages` into the app's own defaults domain, which is what

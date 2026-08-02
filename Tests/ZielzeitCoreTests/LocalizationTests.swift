@@ -39,6 +39,65 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(AppLanguage.preferred(from: []), .english)
     }
 
+    // MARK: - The reader's own choice
+
+    /// A fresh defaults suite per test, so a stored choice cannot leak into the
+    /// next one or into the developer's real preferences.
+    private func store(environment: [String: String] = [:]) -> (LanguageStore, UserDefaults) {
+        let name = "com.zielzeit.tests.language.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        return (LanguageStore(defaults: defaults, environment: environment), defaults)
+    }
+
+    func testNoChoiceMeansFollowTheDevice() {
+        let (store, _) = store()
+        XCTAssertEqual(store.preference, .system)
+        XCTAssertEqual(store.resolved, AppLanguage.detected)
+    }
+
+    func testAChosenLanguageIsRememberedAndUsed() {
+        let (store, _) = store()
+        store.setPreference(.german)
+        XCTAssertEqual(store.preference, .german)
+        XCTAssertEqual(store.resolved, .german)
+
+        store.setPreference(.english)
+        XCTAssertEqual(store.resolved, .english)
+    }
+
+    /// Following the device is the *absence* of a setting, so going back to it
+    /// clears the key rather than storing a sentinel.
+    func testGoingBackToSystemClearsTheStoredChoice() {
+        let (store, defaults) = store()
+        store.setPreference(.german)
+        store.setPreference(.system)
+        XCTAssertNil(defaults.string(forKey: "language"))
+        XCTAssertEqual(store.preference, .system)
+        XCTAssertEqual(store.resolved, AppLanguage.detected)
+    }
+
+    /// The override exists to render a language on demand, so a preference saved
+    /// on the developer's own Mac must not defeat it.
+    func testTheEnvironmentOverrideOutranksAStoredChoice() {
+        let (store, _) = store(environment: ["ZIELZEIT_LANG": "de"])
+        store.setPreference(.english)
+        XCTAssertEqual(store.resolved, .german)
+    }
+
+    func testAnUnrecognisedStoredValueFallsBackToTheDeviceRatherThanFailing() {
+        let (store, defaults) = store()
+        defaults.set("klingon", forKey: "language")
+        XCTAssertEqual(store.preference, .system)
+        XCTAssertEqual(store.resolved, AppLanguage.detected)
+    }
+
+    func testLanguagesNameThemselves() {
+        XCTAssertEqual(AppLanguage.german.endonym, "Deutsch")
+        XCTAssertEqual(AppLanguage.english.endonym, "English")
+        // In German too: the point of an endonym is that it does not move.
+        inGerman { XCTAssertEqual(AppLanguage.english.endonym, "English") }
+    }
+
     // MARK: - Numbers
 
     func testGermanPutsTheEuroSignAfterTheAmount() {

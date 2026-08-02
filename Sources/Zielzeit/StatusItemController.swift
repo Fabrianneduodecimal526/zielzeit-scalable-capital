@@ -93,6 +93,10 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
             // whenever a fetch moves the market but not the year or the percentage —
             // which is most of them.
             _ = model.state.menuBarDirection
+            // The title is translated too — "Erreicht", "Ziel setzen" — and the
+            // strings have nothing observable behind them, so the preference is
+            // what tells the status item to redraw when the language changes.
+            _ = model.languagePreference
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self else { return }
@@ -204,6 +208,24 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(withTitle: Strings.setGoalEllipsis, action: #selector(setGoal), keyEquivalent: "").target = self
         menu.addItem(withTitle: Strings.refreshNow, action: #selector(refresh), keyEquivalent: "").target = self
+
+        // Reachable from here as well as from the popover: if the app has come up
+        // in a language the reader cannot follow, the popover is the harder of the
+        // two to navigate.
+        let languageItem = menu.addItem(withTitle: Strings.language, action: nil, keyEquivalent: "")
+        let languages = NSMenu()
+        for option in LanguagePreference.allCases {
+            let item = languages.addItem(
+                withTitle: option.language?.endonym ?? Strings.systemLanguage,
+                action: #selector(chooseLanguage(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = option.rawValue
+            item.state = model.languagePreference == option ? .on : .off
+        }
+        languageItem.submenu = languages
+
         if LaunchAtLogin.isSupported {
             let item = menu.addItem(withTitle: Strings.launchAtLogin, action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
             item.target = self
@@ -228,6 +250,12 @@ final class StatusItemController: NSObject, NSApplicationDelegate {
 
     @objc private func refresh() {
         model.refresh()
+    }
+
+    @objc private func chooseLanguage(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let preference = LanguagePreference(rawValue: raw) else { return }
+        model.languagePreference = preference
     }
 
     @objc private func toggleLaunchAtLogin() {

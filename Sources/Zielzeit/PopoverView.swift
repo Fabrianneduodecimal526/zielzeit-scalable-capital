@@ -19,6 +19,11 @@ struct PopoverView: View {
             FooterView(model: model, onQuit: onQuit)
         }
         .frame(width: Theme.popoverWidth)
+        // Every string in the tree below comes from `Strings`, which SwiftUI has
+        // nothing to observe. Keying the whole popover on the preference is what
+        // rebuilds it when the language changes, rather than leaving half the
+        // labels in the language that was current when the view was made.
+        .id(model.languagePreference)
         .background {
             // The popover's own material is very translucent, which leaves text
             // competing with whatever wallpaper is behind it. A window-coloured
@@ -293,6 +298,11 @@ struct FooterView: View {
                 Button(Strings.setGoalEllipsis) { model.beginEditingGoal() }
                 Button(Strings.refreshNow) { model.refresh() }
                 Divider()
+                Menu(Strings.language) {
+                    ForEach(LanguagePreference.allCases, id: \.self) { option in
+                        Button(title(for: option)) { model.languagePreference = option }
+                    }
+                }
                 if LaunchAtLogin.isSupported {
                     Button(LaunchAtLogin.isEnabled ? "✓ \(Strings.launchAtLogin)" : Strings.launchAtLogin) {
                         try? LaunchAtLogin.toggle()
@@ -310,6 +320,18 @@ struct FooterView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
+    }
+
+    /// A language row, ticked like the launch-at-login item beside it rather than
+    /// with a `Picker`: `Menu` here is a plain button list, and one convention for
+    /// "this is the one in effect" beats two.
+    ///
+    /// The languages name themselves — `English`, `Deutsch` — while "System" is
+    /// translated, because it is a word about the setting rather than the name of
+    /// a language.
+    private func title(for option: LanguagePreference) -> String {
+        let name = option.language?.endonym ?? Strings.systemLanguage
+        return model.languagePreference == option ? "✓ \(name)" : name
     }
 }
 
