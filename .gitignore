@@ -5,3 +5,7 @@ Zielzeit.app/
 .DS_Store
 
 dist/
+
+# Copied from docs/ by `make site` and by the Pages workflow, never committed.
+site/img/
+.playwright-mcp/
