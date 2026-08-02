@@ -29,10 +29,35 @@ done
 say()  { printf '\033[1m==>\033[0m %s\n' "$1"; }
 fail() { printf '\033[31merror:\033[0m %s\n' "$1" >&2; exit 1; }
 
+# Sparkle's SPM package ships only the framework: the signing tools are in the
+# official tarball, so it is fetched and pinned. A checksum mismatch is fatal —
+# this tarball's output signs the update every user installs.
+SPARKLE_VERSION=2.9.4
+SPARKLE_SHA=ce89daf967db1e1893ed3ebd67575ed82d3902563e3191ca92aaec9164fbdef9
+SPARKLE_TOOLS=".build/sparkle-tools/$SPARKLE_VERSION"
+
+sparkle_tools() {
+    [ -x "$SPARKLE_TOOLS/bin/generate_appcast" ] && return
+    say "Fetching the Sparkle $SPARKLE_VERSION tools"
+    mkdir -p "$SPARKLE_TOOLS"
+    local tarball
+    tarball=$(mktemp -t sparkle)
+    curl -fsSL -o "$tarball" \
+        "https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz" \
+        || fail "could not download the Sparkle tools"
+    local got
+    got=$(shasum -a 256 "$tarball" | cut -d' ' -f1)
+    [ "$got" = "$SPARKLE_SHA" ] \
+        || fail "Sparkle tarball checksum mismatch: got $got, expected $SPARKLE_SHA"
+    tar -xJf "$tarball" -C "$SPARKLE_TOOLS" || fail "could not extract the Sparkle tools"
+    rm -f "$tarball"
+}
+
 # ---------------------------------------------------------------- preflight
 
 command -v gh >/dev/null || fail "gh is not installed"
 gh auth status >/dev/null 2>&1 || fail "gh is not logged in — run: gh auth login"
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 
 [ -n "$(git status --porcelain)" ] && fail "working tree is dirty — commit or stash first"
 
@@ -169,6 +194,39 @@ sleep 5
 RUN=$(gh run list --workflow=release.yml --limit 1 --json databaseId -q '.[0].databaseId')
 gh run watch "$RUN" --exit-status || fail "the release workflow failed — tag v$NEW is pushed but there is no release"
 
+# ---------------------------------------------------------------- appcast
+
+# Signed here rather than in the workflow, and deliberately: the private key
+# stays in this Mac's login Keychain and never becomes a GitHub secret, because
+# a secret is readable by anything running in that job — and this repo is public
+# and the workflow uses third-party actions. A leak of this key means pushing
+# arbitrary code to every user of an app that reads their brokerage account.
+#
+# Signing the *published* zip rather than a local build is the same instinct as
+# the verification below: what a user actually downloads is what matters.
+say "Signing the appcast"
+sparkle_tools
+STAGE=$(mktemp -d)
+gh release download "v$NEW" --pattern "Zielzeit-$NEW.zip" --dir "$STAGE" \
+    || fail "could not download Zielzeit-$NEW.zip from the release"
+
+# The zip, not the dmg: users click the dmg, Sparkle downloads the zip, which is
+# the archive format it handles most reliably and which `ditto --keepParent`
+# already produces. So no new build artifact — only appcast.xml.
+#
+# generate_appcast reads CFBundleVersion, CFBundleShortVersionString and
+# LSMinimumSystemVersion out of the app itself, so the appcast cannot disagree
+# with the bundle it describes.
+"$SPARKLE_TOOLS/bin/generate_appcast" \
+    --download-url-prefix "https://github.com/$REPO/releases/download/v$NEW/" \
+    --full-release-notes-url "https://github.com/$REPO/releases" \
+    "$STAGE" \
+    || fail "generate_appcast failed — is the EdDSA private key in this Mac's Keychain?"
+
+[ -f "$STAGE/appcast.xml" ] || fail "generate_appcast produced no appcast.xml"
+gh release upload "v$NEW" "$STAGE/appcast.xml" || fail "could not upload appcast.xml"
+rm -rf "$STAGE"
+
 # --------------------------------------------------------------- verify
 
 # The v1.1 release went out with an empty asset list, so "the workflow passed"
@@ -176,9 +234,7 @@ gh run watch "$RUN" --exit-status || fail "the release workflow failed — tag v
 say "Verifying the published release"
 read -r IS_DRAFT ASSETS < <(gh release view "v$NEW" --json isDraft,assets -q '"\(.isDraft) \(.assets|length)"')
 [ "$IS_DRAFT" = "false" ] || fail "v$NEW published as a draft — publish it by hand, do not create a second release on the tag"
-[ "$ASSETS" -eq 3 ] || fail "v$NEW has $ASSETS assets, expected 3 (Zielzeit-$NEW.dmg, .zip and Zielzeit.dmg)"
-
-REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+[ "$ASSETS" -eq 4 ] || fail "v$NEW has $ASSETS assets, expected 4 (Zielzeit-$NEW.dmg, .zip, Zielzeit.dmg and appcast.xml)"
 
 # Both URLs, because they fail independently. The versioned one is what this
 # release published; the unversioned one is what every link already out there
@@ -187,7 +243,8 @@ REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
 # Miss that and the old link does not keep serving v$NEW, it starts 404ing.
 for URL in \
     "https://github.com/$REPO/releases/latest/download/Zielzeit-$NEW.dmg" \
-    "https://github.com/$REPO/releases/latest/download/Zielzeit.dmg"; do
+    "https://github.com/$REPO/releases/latest/download/Zielzeit.dmg" \
+    "https://github.com/$REPO/releases/latest/download/appcast.xml"; do
     # Assets can 404 for up to a minute after upload while the CDN catches up,
     # so give it a few tries before calling it broken.
     for _ in 1 2 3 4 5 6; do
@@ -197,6 +254,22 @@ for URL in \
     done
     [ "$CODE" = "200" ] || fail "$URL returned $CODE — the asset is not reachable"
 done
+
+# The check with no precedent here, and the one that matters most. An appcast
+# that parses, resolves and advertises the *previous* version is indistinguishable
+# from a working update channel until a user reports being stuck three releases
+# back. The feed URL follows the latest release, so this is also what catches a
+# release that published without an appcast and left the old one serving.
+say "Checking the appcast advertises v$NEW"
+FEED=$(mktemp)
+curl -fsSL -o "$FEED" "https://github.com/$REPO/releases/latest/download/appcast.xml" \
+    || fail "could not fetch the published appcast"
+# Sparkle has emitted the version as an element and as an enclosure attribute in
+# different releases, so both are accepted rather than pinning to one shape.
+FEED_VERSION=$(xmllint --xpath 'string((//item[1]/*[local-name()="shortVersionString"] | //item[1]/enclosure/@*[local-name()="shortVersionString"])[1])' "$FEED" 2>/dev/null || echo "")
+rm -f "$FEED"
+[ "$FEED_VERSION" = "$NEW" ] \
+    || fail "the appcast advertises '$FEED_VERSION', expected $NEW — users would not be offered this release"
 
 say "Released v$NEW"
 gh release view "v$NEW" --json url -q .url

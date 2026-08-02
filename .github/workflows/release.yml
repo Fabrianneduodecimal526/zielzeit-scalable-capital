@@ -72,6 +72,9 @@ jobs:
             3. Go to **System Settings → Privacy & Security**, scroll down, and click
                **Open Anyway**. You only do this once.
 
+            Zielzeit updates itself from then on: later versions install in the background,
+            so this is the only time you download anything.
+
             Zielzeit then walks you through connecting to your Scalable Capital account.
             See the [README](https://github.com/Mannafee/zielzeit-scalable-capital#readme) for the full
             setup, including the one Terminal step the Scalable CLI requires.

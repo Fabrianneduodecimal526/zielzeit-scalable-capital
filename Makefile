@@ -135,6 +135,8 @@ release-app: Zielzeit.icns
 	@cp $(UNIVERSAL) $(DIST)/$(APP)/Contents/MacOS/Zielzeit
 	@cp Info.plist $(DIST)/$(APP)/Contents/Info.plist
 	@cp Zielzeit.icns $(DIST)/$(APP)/Contents/Resources/Zielzeit.icns
+	@# Same as `app`: the framework goes in before the container is signed.
+	@Scripts/embed-sparkle $(DIST)/$(APP)
 	@# Ad-hoc, as everywhere else here: there is no Developer ID to sign with,
 	@# so the download is not notarized and macOS will ask the user to confirm
 	@# it once. The README explains that step; don't quietly drop the signature,
