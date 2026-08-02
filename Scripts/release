@@ -176,11 +176,27 @@ gh run watch "$RUN" --exit-status || fail "the release workflow failed — tag v
 say "Verifying the published release"
 read -r IS_DRAFT ASSETS < <(gh release view "v$NEW" --json isDraft,assets -q '"\(.isDraft) \(.assets|length)"')
 [ "$IS_DRAFT" = "false" ] || fail "v$NEW published as a draft — publish it by hand, do not create a second release on the tag"
-[ "$ASSETS" -eq 2 ] || fail "v$NEW has $ASSETS assets, expected 2 (.dmg and .zip)"
+[ "$ASSETS" -eq 3 ] || fail "v$NEW has $ASSETS assets, expected 3 (Zielzeit-$NEW.dmg, .zip and Zielzeit.dmg)"
 
-DMG="https://github.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)/releases/latest/download/Zielzeit-$NEW.dmg"
-CODE=$(curl -sI -L -o /dev/null -w '%{http_code}' "$DMG")
-[ "$CODE" = "200" ] || fail "the download URL returned $CODE — the asset is not reachable"
+REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
+
+# Both URLs, because they fail independently. The versioned one is what this
+# release published; the unversioned one is what every link already out there
+# points at — the README, the directory listings, comments nobody can edit —
+# and it only resolves if this release carried an asset named Zielzeit.dmg.
+# Miss that and the old link does not keep serving v$NEW, it starts 404ing.
+for URL in \
+    "https://github.com/$REPO/releases/latest/download/Zielzeit-$NEW.dmg" \
+    "https://github.com/$REPO/releases/latest/download/Zielzeit.dmg"; do
+    # Assets can 404 for up to a minute after upload while the CDN catches up,
+    # so give it a few tries before calling it broken.
+    for _ in 1 2 3 4 5 6; do
+        CODE=$(curl -sI -L -o /dev/null -w '%{http_code}' "$URL")
+        [ "$CODE" = "200" ] && break
+        sleep 10
+    done
+    [ "$CODE" = "200" ] || fail "$URL returned $CODE — the asset is not reachable"
+done
 
 say "Released v$NEW"
 gh release view "v$NEW" --json url -q .url

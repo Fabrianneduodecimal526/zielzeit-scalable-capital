@@ -109,7 +109,9 @@ install: app ## Copy the app to /Applications
 
 release: zip dmg ## Build the universal downloads (zip + dmg) into dist/
 	@echo
-	@echo "Ready in $(DIST)/. Attach both to the GitHub release for v$(VERSION)."
+	@echo "Ready in $(DIST)/. Attach all three to the GitHub release for v$(VERSION)."
+	@echo "Zielzeit.dmg is the unversioned copy that keeps the permanent"
+	@echo "/releases/latest/download/Zielzeit.dmg link working. Don't skip it."
 
 # Same bundle as `app`, but built for both architectures so the download runs on
 # Intel Macs as well as Apple silicon.
@@ -134,14 +136,18 @@ zip: release-app ## Zip the universal app for download
 	@echo "Wrote $(DIST)/Zielzeit-$(VERSION).zip"
 
 dmg: release-app ## Build a drag-to-Applications disk image
-	@rm -rf $(DIST)/stage $(DIST)/Zielzeit-$(VERSION).dmg
+	@rm -rf $(DIST)/stage $(DIST)/Zielzeit-$(VERSION).dmg $(DIST)/Zielzeit.dmg
 	@mkdir -p $(DIST)/stage
 	@cp -R $(DIST)/$(APP) $(DIST)/stage/
 	@ln -s /Applications $(DIST)/stage/Applications
 	@hdiutil create -quiet -volname "Zielzeit $(VERSION)" -srcfolder $(DIST)/stage \
 		-ov -format UDZO $(DIST)/Zielzeit-$(VERSION).dmg
 	@rm -rf $(DIST)/stage
-	@echo "Wrote $(DIST)/Zielzeit-$(VERSION).dmg"
+	@# An unversioned copy as well, and the name is the whole point: GitHub serves
+	@# /releases/latest/download/<name>, so only a filename that never changes gives
+	@# out a download link that survives the next release. Attach both.
+	@cp $(DIST)/Zielzeit-$(VERSION).dmg $(DIST)/Zielzeit.dmg
+	@echo "Wrote $(DIST)/Zielzeit-$(VERSION).dmg and $(DIST)/Zielzeit.dmg"
 
 uninstall: ## Remove the installed app and its saved goal
 	@pkill -x Zielzeit 2>/dev/null || true

@@ -240,15 +240,21 @@ Scripts/release --dry-run    # print the plan, change nothing
 It bumps `CFBundleShortVersionString` and `CFBundleVersion`, runs the tests, opens the bump PR,
 waits for CI, merges, tags, and waits for the release build. `.github/workflows/release.yml` picks
 the tag up from there: tests, a universal binary (`arm64` and `x86_64`, so Intel Macs are covered),
-a `.zip` and a drag-to-Applications `.dmg`, published with install instructions. `make release`
-builds the same artifacts locally if you need to check one by hand.
+a `.zip` and a drag-to-Applications `.dmg` (twice: once versioned, once as a plain `Zielzeit.dmg`
+for the permanent download link), published with install instructions. `make release` builds the
+same artifacts locally if you need to check one by hand.
 
 The script does the steps in that order because doing them by hand is what went wrong. Three of its
 checks are there for specific failures that have already happened:
 
 - **The bump goes through a pull request.** `main` is protected, and a direct push is rejected by
   the branch hook.
-- **The published release is verified to carry both assets, and the download URL is fetched.** v1.1
+- **The published release is verified to carry all three assets, and both download URLs are
+  fetched.** The third asset is `Zielzeit.dmg`, an unversioned copy of the same disk image, and it
+  is what makes `releases/latest/download/Zielzeit.dmg` a link that survives the next release. Every
+  link already handed out points there, including ones in comments nobody can go back and edit, so
+  a release that omits it does not leave the old link serving the previous version, it breaks it.
+  v1.1
   went out with an empty asset list: the workflow's draft was left sitting and a second release was
   created on the same tag from the GitHub UI, which is a *new* release rather than an edit of the
   draft, so the artifacts stayed behind. The workflow publishes directly now, so there is no draft
