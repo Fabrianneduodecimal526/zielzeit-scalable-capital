@@ -1,11 +1,11 @@
-# Zielzeit — build, test, and package the menu bar app.
+# Zielzeit: build, test, and package the menu bar app.
 
 APP      := Zielzeit.app
 BINARY   := .build/release/Zielzeit
 CONTENTS := $(APP)/Contents
 
 # Distribution artifacts. VERSION must match CFBundleShortVersionString in
-# Info.plist — the release workflow tags against it.
+# Info.plist, since the release workflow tags against it.
 VERSION  := $(shell /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Info.plist)
 DIST     := dist
 # A universal binary, so the download runs on Intel Macs too. `make app` builds
@@ -38,12 +38,12 @@ ui: ## Render the popover to PNGs, light and dark (STATE=ready|slider|editing|�
 	@.build/debug/Zielzeit --render .build/ui-light.png $(STATE)
 	@.build/debug/Zielzeit --render .build/ui-dark.png $(STATE) --dark
 	@echo "Open them with: open .build/ui-light.png .build/ui-dark.png"
-	@echo "Note: AppKit-backed controls (slider, menus) do not rasterize — use 'make open' for those."
+	@echo "Note: AppKit-backed controls (slider, menus) do not rasterize. Use 'make open' for those."
 
 shots: ## Regenerate the README screenshots in docs/ from synthetic data
 	@swift build
 	@mkdir -p docs
-	@# Always against the demo stub, never a real account — these get published.
+	@# Always against the demo stub, never a real account, since these get published.
 	@# 3×, not 2×: the README shows the popover at 380px wide, so a 2× shot lands at
 	@# 1.8 device pixels per CSS pixel on a Retina screen and reads soft. 3× clears
 	@# Retina with room to spare; 4× only costs file size.
@@ -91,7 +91,7 @@ app: build Zielzeit.icns ## Package Zielzeit.app
 run: app ## Package and launch the app
 	@pkill -x Zielzeit 2>/dev/null || true
 	@open $(APP)
-	@echo "Zielzeit is running — look for the progress ring in the menu bar."
+	@echo "Zielzeit is running. Look for the progress ring in the menu bar."
 
 install: app ## Copy the app to /Applications
 	@rm -rf /Applications/$(APP)
@@ -100,7 +100,7 @@ install: app ## Copy the app to /Applications
 
 release: zip dmg ## Build the universal downloads (zip + dmg) into dist/
 	@echo
-	@echo "Ready in $(DIST)/ — attach both to the GitHub release for v$(VERSION)."
+	@echo "Ready in $(DIST)/. Attach both to the GitHub release for v$(VERSION)."
 
 # Same bundle as `app`, but built for both architectures so the download runs on
 # Intel Macs as well as Apple silicon.

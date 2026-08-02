@@ -1,28 +1,28 @@
 # Contributing to Zielzeit
 
-Thanks for taking a look. This is a small, opinionated codebase — this document covers what you need
-to build it, how to see your change without a broker account, and the handful of rules that keep the
-numbers honest.
+Thanks for taking a look. This is a small, opinionated codebase. This document covers what you need
+to build it, how to see your change without a broker account, and the rules that keep the numbers
+accurate.
 
 ## Getting set up
 
 ```sh
 git clone https://github.com/Mannafee/zielzeit.git
 cd zielzeit
-make test     # 229 tests, ~5 seconds — start here
+make test     # 229 tests, about 5 seconds. Start here.
 make once     # print the report as text (needs a connected CLI, or use the stub below)
 ```
 
-You need **macOS 15+** and **Xcode 16 or later** (or an equivalent Swift 6 toolchain). You do *not*
-need a Scalable Capital account to work on almost anything — see
+You need macOS 15 or later and Xcode 16 or later (or an equivalent Swift 6 toolchain). You do not
+need a Scalable Capital account to work on almost anything. See
 [Working without a broker account](#working-without-a-broker-account).
 
 ## The one architectural rule
 
-**All arithmetic lives in `ZielzeitCore`. All UI lives in `Zielzeit`.**
+All arithmetic lives in `ZielzeitCore`. All UI lives in `Zielzeit`.
 
 - No `import AppKit` or `import SwiftUI` in `ZielzeitCore`.
-- No math in the view layer — if a view needs a number, add it to `Report` and read it.
+- No math in the view layer. If a view needs a number, add it to `Report` and read it.
 
 That split is the whole reason the projections are unit-testable and the two UI harnesses work. A PR
 that computes a figure inside a `View` will be asked to move it.
@@ -30,20 +30,20 @@ that computes a figure inside a `View` will be asked to move it.
 ## Layout
 
 ```
-Sources/ZielzeitCore/          pure logic — every test lives against this
+Sources/ZielzeitCore/          pure logic, and where every test points
   Projection.swift               compounding math, balance curves, the inverse solve
   Report.swift                   view model: scenarios, chart curves, what-ifs, rows
   MarketMove.swift               return windows, direction, derived percentages
   Disclaimer.swift               the caveats, built from the report
   Formatting.swift               euro / percent / column formatting
   ScalableClient.swift           read-only `sc` invocation and decoding
-  PortfolioSnapshot.swift        the data model + PortfolioProviding protocol
+  PortfolioSnapshot.swift        the data model and PortfolioProviding protocol
   GoalStore.swift                goal persistence and amount parsing
   Setup.swift                    onboarding state, access request, mailto builder
   RefreshPolicy.swift            backoff after a failed fetch
   Defaults.swift                 the shared preferences domain
 
-Sources/Zielzeit/              the app — AppKit and SwiftUI, no arithmetic
+Sources/Zielzeit/              the app: AppKit and SwiftUI, no arithmetic
   main.swift                     entry point and mode dispatch
   AppModel.swift                 @Observable state, fetching, goal actions
   StatusItemController.swift     menu bar item, popover, wake and theme observers
@@ -67,19 +67,19 @@ Sources/Zielzeit/              the app — AppKit and SwiftUI, no arithmetic
   DevState.swift                 named states for both harnesses
 
 Tests/ZielzeitCoreTests/       229 tests, including decoding against payloads
-                               captured verbatim from the real CLI
+                               shaped from real CLI responses (never real data)
 ```
 
 `CLAUDE.md` in the repo root is a long-form engineering log: why each decision was made and which
-"obvious improvements" were tried and rejected. Worth skimming before you change behaviour — several
-things that look like bugs are load-bearing.
+"obvious improvements" were tried and rejected. Worth skimming before you change behaviour, because
+several things that look like bugs are load-bearing.
 
 ## Make targets
 
 | Target | What it does |
 |---|---|
 | `make test` | Run the unit tests |
-| `make once` | Print the whole report as text — the fastest check of the numbers |
+| `make once` | Print the whole report as text, the fastest check of the numbers |
 | `make ui` | Rasterize the popover to `.build/ui-{light,dark}.png` |
 | `make shots` | Regenerate the README screenshots in `docs/` from synthetic data |
 | `make icons` | Draw the menu bar glyph at every progress value, with fit diagnostics |
@@ -93,18 +93,19 @@ things that look like bugs are load-bearing.
 
 ## Seeing your change
 
-There are four ways to look at the app, and **each has a blind spot**:
+There are four ways to look at the app, and each has a blind spot:
 
 | | What it shows | Limitation |
 |---|---|---|
 | `make once` | The numbers, as text | No UI at all |
-| `make ui` | The popover rasterized offscreen, both appearances, crisp at 2× | `ImageRenderer` **cannot** rasterize AppKit-backed controls — the two sliders and the footer menu come out as coloured blocks. That is not a bug in your change. |
-| `make shots` | The same thing *with* the real controls, at 2× | Prominent buttons draw grey rather than in the accent colour (see the note on `RenderMode.shot`). Dark appearance only. |
+| `make ui` | The popover rasterized offscreen, both appearances, crisp at 2× | `ImageRenderer` cannot rasterize AppKit-backed controls, so the two sliders and the footer menu come out as coloured blocks. That is not a bug in your change. |
+| `make shots` | The same thing with the real controls, at 4× | Prominent buttons draw grey rather than in the accent colour (see the note on `RenderMode.shot`). Dark appearance only. |
 | `make open` | The real popover, real controls, real colours | You have to screenshot it yourself (`screencapture -R<x,y,w,h>`), and on a non-Retina display you only get 1× |
 
-`make shots` is what regenerates the README images in `docs/`. It hosts the popover in an offscreen
-window and captures it into a bitmap allocated at 2× the pixel count, which is how a Retina asset comes
-out of a non-Retina Mac. Use it in preference to a screen capture when you need a crisp image.
+`make shots` regenerates the README images in `docs/`. It hosts the popover in an offscreen window and
+captures it into a bitmap allocated at several times the pixel count, which is how a Retina asset
+comes out of a non-Retina Mac. Prefer it to a screen capture when you need a crisp image. Check the
+result against the `width=` the README displays it at: the source needs at least twice that.
 
 Both `make ui` and `make open` take `STATE=`, so any state can be inspected on demand instead of
 waiting for it to happen:
@@ -121,15 +122,15 @@ make open STATE=market-down
 otherwise unreviewable on demand.
 
 **Judge the menu bar glyph with `make icons`, never by eye from a screenshot of the real bar.** At
-20pt, magnification blur reads as digits colliding with the ring when they are not — that's why
+20pt, magnification blur reads as digits colliding with the ring when they are not, which is why
 `--icons` prints a fit ratio per value.
 
 ## Working without a broker account
 
 Two environment variables are honoured by every mode:
 
-- `ZIELZEIT_GOAL` — use a goal without touching the saved one
-- `ZIELZEIT_SC_BIN` — point at a stub in place of the real CLI
+- `ZIELZEIT_GOAL` sets a goal without touching the saved one
+- `ZIELZEIT_SC_BIN` points at a stub in place of the real CLI
 
 Failure paths need nothing more than:
 
@@ -138,9 +139,9 @@ ZIELZEIT_SC_BIN=/usr/bin/false swift run Zielzeit --once      # no output
 ZIELZEIT_SC_BIN=/nonexistent/sc swift run Zielzeit --once     # CLI missing
 ```
 
-For a full, realistic app with **synthetic** data, `Scripts/sc-demo` answers every read-only command
-Zielzeit uses with invented but internally consistent figures — a €42 350 portfolio, a €500/mo plan
-with a 5% step-up, and a 19.7% trailing pace. It is what the README screenshots are made from:
+For a full, realistic app with synthetic data, `Scripts/sc-demo` answers every read-only command
+Zielzeit uses with invented but internally consistent figures: a €42 350 portfolio, a €500/mo plan
+with a 5% step-up, and a 19.7% trailing pace. It is what the README screenshots are made from.
 
 ```sh
 ZIELZEIT_SC_BIN=$PWD/Scripts/sc-demo ZIELZEIT_GOAL=250000 make once
@@ -151,7 +152,7 @@ It also carries a `NON_TRADE_SECURITY_TRANSACTION` and an `INTEREST` entry in it
 running against it exercises the filtering that keeps a custody migration from being counted as a
 year's worth of deposits.
 
-To walk the **real** onboarding while you still have a working session, point at a stub that fails
+To walk the real onboarding while you still have a working session, point at a stub that fails
 everything except `installation-code`, which needs no session and can be forwarded to the real CLI:
 
 ```sh
@@ -180,8 +181,8 @@ These are not style preferences. A PR that breaks one will not be merged.
 3. **Never bundle the Scalable CLI** in the app bundle or the repo.
 4. **Invoke `sc` by absolute path.** An app launched from Finder inherits a minimal `PATH` without
    `/opt/homebrew/bin`, so a bare `sc` works in your shell and fails only in the built app.
-5. **Never commit real portfolio figures** — not in screenshots, fixtures, or test data. Test
-   fixtures captured from the live CLI must have their amounts replaced.
+5. **Never commit real portfolio figures**, in screenshots, fixtures or test data. A fixture copied
+   from the live CLI must have its amounts, installation codes and ISINs replaced first.
 
 ## Changing the math
 
@@ -189,10 +190,10 @@ If you touch `Projection` or `Report`:
 
 - **Write the test first.** Everything in `ZielzeitCore` is testable with no UI and no account.
 - The edge cases already covered must stay covered: `V ≥ G`, `r = 0` with and without savings,
-  `r < 0` (where flat contributions cap the balance at `−P/r` and a goal above that is genuinely
-  unreachable), a portfolio younger than a year, and dynamization off-by-ones at months 11/12/13/24/25.
+  `r < 0` (where flat contributions cap the balance at `−P/r`, putting a goal above that out of
+  reach), a portfolio younger than a year, and dynamization off-by-ones at months 11/12/13/24/25.
 - The chart and the headline share one code path on purpose, and a test asserts each curve meets the
-  goal line at exactly the month `monthsToGoal` returns. **Don't break that cross-check** — it's what
+  goal line at exactly the month `monthsToGoal` returns. Don't break that cross-check. It is what
   keeps the picture and the number from drifting apart.
 - `Disclaimer` builds its caveats *from the report*, so if you add an assumption, add its line and
   assert it in **both** directions. Only the absence assertions catch a caveat that has stopped
@@ -215,9 +216,9 @@ The end-to-end job is the one worth understanding: it runs the whole report agai
 so a decoder change that compiles and passes the unit tests but falls over on a complete payload gets
 caught. It needs no account and no network.
 
-The hygiene job exists because the fixtures are *shaped from* real CLI responses, which makes pasting
-a live one in genuinely easy to do by accident. If it fails on a legitimate placeholder, add the
-placeholder to its allow-list rather than loosening the pattern.
+The hygiene job exists because the fixtures are shaped from real CLI responses, which makes pasting a
+live one in easy to do by accident. If it fails on a legitimate placeholder, add the placeholder to
+its allow-list rather than loosening the pattern.
 
 Run all three locally before pushing:
 
@@ -234,25 +235,25 @@ Downloads are built by `.github/workflows/release.yml` when a `v*` tag is pushed
 git tag v1.1 && git push origin v1.1
 ```
 
-CI runs the tests, builds a **universal** binary (`arm64` + `x86_64`, so Intel Macs are covered),
-packages a `.zip` and a drag-to-Applications `.dmg`, and opens a **draft** release with install
-instructions — review it, then publish. `make release` does the same thing locally if you need to
+CI runs the tests, builds a universal binary (`arm64` and `x86_64`, so Intel Macs are covered),
+packages a `.zip` and a drag-to-Applications `.dmg`, and opens a draft release with install
+instructions. Review it, then publish. `make release` does the same thing locally if you need to
 check an artifact by hand.
 
 Two things to know:
 
-- **`make app` builds for the host architecture only.** That is deliberate — it keeps the development
-  loop fast. Only `make release` goes universal, so never ship the output of `make app`.
+- **`make app` builds for the host architecture only,** which keeps the development loop fast. Only
+  `make release` goes universal, so never ship the output of `make app`.
 - **The artifacts are ad-hoc signed, not notarized.** There is no paid Apple Developer ID behind this
   project, so a downloaded copy trips Gatekeeper and the user has to click *Open Anyway* once. The
-  README and the release notes both explain that. Don't drop the ad-hoc signature to try to avoid it —
-  it doesn't help, and macOS needs a signature before it will register the app as a login item. If a
+  README and the release notes both explain that. Don't drop the ad-hoc signature to try to avoid it.
+  It doesn't help, and macOS needs a signature before it will register the app as a login item. If a
   Developer ID ever gets added, sign and notarize in the workflow and delete those instructions.
 
 ## Submitting
 
 1. Branch off `main`.
-2. `make test` must pass — all 229.
+2. `make test` must pass, all 229 of them.
 3. If you changed UI, attach a `make ui` or `make open` screenshot to the PR.
 4. Keep commit messages descriptive of the *why*; the codebase's comments are written that way too.
 5. Open a PR against `main` describing what changed and how you verified it.

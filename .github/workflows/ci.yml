@@ -31,8 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # Catches packaging breakage — a missing Info.plist key, an icon that no
-      # longer generates — which `swift test` cannot see.
+      # Catches packaging breakage (a missing Info.plist key, an icon that no
+      # longer generates) which `swift test` cannot see.
       - name: Package the app
         run: make app
 
@@ -61,7 +61,7 @@ jobs:
         run: |
           make shots
           # `make ui` reads a goal and a portfolio, so it needs the demo CLI and a
-          # goal in the environment — there is neither a saved goal nor a session
+          # goal in the environment, and there is neither a saved goal nor a session
           # on a runner.
           ZIELZEIT_SC_BIN=$PWD/Scripts/sc-demo ZIELZEIT_GOAL=250000 make ui
           for f in docs/popover.png docs/setup.png docs/menubar.png; do
