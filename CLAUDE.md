@@ -86,7 +86,7 @@ no `import AppKit`/`SwiftUI` in `ZielzeitCore`, no math in the view layer.
   `StatusItemController` (status item + popover), `PopoverView`/`HeroView`/`ProjectionChartView`/
   `ScenarioListView`/`WhatIfSliderView`/`MarketChipView`/`GoalEditorView`/`SetupView`/`Theme`
   (SwiftUI), `ViewState`, `LaunchAtLogin`, `StatusItemIcon` (menu bar ring), `AppIconArtwork`
-  (app icon), `TextMode`, `RenderMode`, `DevState`
+  (app icon), `TextMode`, `RenderMode`, `DevState`, `UpdateController` (Sparkle)
 - `Tests/ZielzeitCoreTests/`: 251 tests covering the math, curves, view model, amount parsing, and
   decoding against payloads *shaped* from real CLI responses. **Shaped, not captured: no fixture may
   carry real account data.** No real balance, contribution, installation code or ISIN. The repo is
@@ -310,6 +310,59 @@ working path there; `sudo make install` or a user-level `~/Applications` are the
 `editing`, `setup-cli`, `setup-access`, `setup-requested`, `caveats` (see `DevState`). `market-down`
 pins the chip to a window that is actually negative, since which ones are changes daily and the losing
 colour is otherwise unreviewable on demand.
+
+## Updating itself
+
+Sparkle, this package's **only dependency**, and the only reason it earns one: distribution is a DMG
+from a releases page with no cask, so without it a user who installed v1.0 runs v1.0 forever.
+
+- **Updates are silent — no "a new version is available" prompt, deliberately.** For a menu bar app
+  the reader does not look at, that dialog is an interruption offering a decision they have no basis to
+  make. `SUEnableAutomaticChecks` and `SUAutomaticallyUpdate` in `Info.plist` are both set, which is
+  what suppresses Sparkle's own permission prompt. Consent is by disclosure instead: the footer menu
+  says `Zielzeit 1.1 · updates automatically`, and that line is the only place it is stated, so don't
+  remove it.
+- **Silent means staged, not instant: the swap happens on quit, not while running.** With
+  `SUAutomaticallyUpdate`, Sparkle downloads and stages the new version in the background, but a
+  running app keeps executing the old one until it quits — that is when Sparkle installs the update.
+  For a menu bar app people leave running for weeks, a staged update can sit unapplied a long time.
+  Don't describe this as landing the moment it downloads; it lands at the next quit-and-reopen.
+- **`UpdateController.shared` is nil unless `main`'s app path calls `start()`, and that is the gate.**
+  `--once`, `--render`, `--shot`, `--icons` and `--appicon` return before that path; `--open` is
+  excluded too, since it is a screenshot harness that should not replace its own binary mid-capture.
+  This matters concretely: `PopoverView` renders its footer under `--render` and `--shot`, so a view
+  that built an updater on demand would have `make shots` and CI polling the appcast. The version line
+  reads `AppVersion.current` straight from the bundle so it still renders there; the menu item is
+  behind `if let`.
+- **Ad-hoc signing puts this app on Sparkle's EdDSA-only verification path.** With no Developer ID
+  there is no signature to match across builds, so the EdDSA key is the whole of the verification.
+  That path works — it was proven end-to-end before the pipeline was built — but it is why
+  `SUPublicEDKey` is not optional decoration.
+- **Two `codesign` rules, both already paid for.** Never `--deep` (Sparkle's docs say so), and never
+  `-o runtime`: hardened runtime enables library validation, which wants a matching Team ID, and an
+  ad-hoc signature has none — so the app refuses to load its own framework at launch. Sign inside-out,
+  container last. `Scripts/embed-sparkle` does this and both `app` and `release-app` call it *before*
+  their own `codesign` line, because signing a container and then adding a nested bundle invalidates it.
+- **`.unsafeFlags` in `Package.swift`** carries the `@executable_path/../Frameworks` rpath. Legal only
+  because Zielzeit is a root package; SwiftPM refuses it the day anything depends on this one.
+- **The appcast is a release asset at a fixed name**, on the same reasoning as `Zielzeit.dmg`:
+  `/releases/latest/download/<name>` only survives releases if the filename never changes. It points at
+  the **zip**, not the dmg — users click the dmg, Sparkle takes the zip, which is the format it handles
+  most reliably. So there is no new build artifact, only `appcast.xml`.
+- **A release published without an `appcast.xml` 404s the feed and silently stops all update checks.**
+  Safe, but invisible, which is why `Scripts/release` verifies the URL resolves *and* that the version
+  inside it equals the tag. An appcast advertising the previous version is indistinguishable from a
+  working channel until someone reports being stuck.
+- **The private key is in the maintainer's login Keychain and never in CI.** A GitHub secret is
+  readable by anything in that job, this repo is public, and the workflow uses third-party actions.
+  Consequence: releases can only be cut from that machine. See CONTRIBUTING.
+- **Sparkle's own dialogs follow the system language, not `ZIELZEIT_LANG`**, since they use Sparkle's
+  localizations rather than `Strings`. A known seam, left alone: it is two dialogs most users never see.
+- The one case silent updates are not silent: an app in `/Applications` on a **standard, non-admin
+  account** needs an admin password to be replaced, and Sparkle prompts. Same edge `make install`
+  already has. **This edge is untested**: the end-to-end proof ran in `~/Applications`, because the
+  account it ran on is not in the `admin` group, and dragging to `/Applications` from the DMG is the
+  common path users actually take. Verifying it needs an admin account and has not been done.
 
 ### Market movement
 

@@ -273,6 +273,26 @@ Two more things to know:
   It doesn't help, and macOS needs a signature before it will register the app as a login item. If a
   Developer ID ever gets added, sign and notarize in the workflow and delete those instructions.
 
+## The update signing key
+
+Releases are verified with EdDSA, not with an Apple Developer ID — there isn't one. The public half is
+`SUPublicEDKey` in `Info.plist`; the private half is in the maintainer's **login Keychain** and is
+never a GitHub secret, because a secret is readable by anything running in the release workflow, and
+this repo is public and that workflow uses third-party actions. A leak means pushing arbitrary code to
+every user of an app that reads their brokerage account.
+
+The consequence is that **a release can only be cut from the machine holding that key.**
+`Scripts/release` signs the appcast locally after the workflow publishes, then uploads it.
+
+**Losing the key is not recoverable.** Every installed copy trusts only that key, so a new one means
+no existing installation can ever be updated again — every user would have to find out by other means
+and download by hand, which is the exact situation Sparkle is here to prevent. Confirm it is present
+with `.build/sparkle-tools/<version>/bin/generate_keys -p`, and back it up outside the Keychain.
+
+The signing tools are not in Sparkle's SPM package; `Scripts/release` fetches the official tarball
+against a pinned SHA-256. Bumping `SPARKLE_VERSION` there means updating `SPARKLE_SHA` in the same
+commit, and the `from:` version in `Package.swift` alongside it.
+
 ## Submitting
 
 1. Branch off `main`.
