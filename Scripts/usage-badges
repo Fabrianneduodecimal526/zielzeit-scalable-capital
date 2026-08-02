@@ -1,110 +1,45 @@
 #!/bin/bash
 #
-# Write the README's usage badges into site/badge/, for the Pages workflow to
+# Write the README's downloads badge into site/badge/, for the Pages workflow to
 # publish and shields.io to render through its `endpoint` badge.
 #
-#     Scripts/usage-badges [--repo OWNER/NAME] [--site URL]
+#     Scripts/usage-badges [--repo OWNER/NAME]
 #
-# Two figures, from the release API and nothing else. The app itself sends no
-# telemetry and must not start: everything here is counted by GitHub on the way
-# out, and none of it can identify anyone.
+# One figure, from the release API and nothing else. The app itself sends no
+# telemetry and must not start: this is counted by GitHub on the way out, and it
+# cannot identify anyone.
 #
 #   downloads  every .dmg asset across every release, summed. Both names count
 #              (Zielzeit.dmg and Zielzeit-1.2.dmg are the same build published
 #              twice so the "latest" URL can stay stable), but a person takes
 #              one or the other, so the sum is a person count and not a double.
 #
-#   active     how many copies checked for an update in the last day, which is
-#              the closest thing to a running-installs figure that exists here.
-#              Sparkle polls the appcast once every 24h (SUScheduledCheckInterval
-#              is unset, so the default applies) plus once per launch, so the
-#              day-over-day *rise* in appcast.xml's download count is roughly one
-#              per install still running. The absolute count is not: it is every
-#              check ever made, and it climbs whether anyone is using the app or
-#              not, which is why this stores a history and reports the delta.
-#
-# The history lives on the published site rather than in git, so this leaves no
-# daily bot commit behind. It is re-fetched from the live URL each run, appended
-# to, and republished. Consequence to accept: wiping the Pages deployment resets
-# the series, and "active" reads "—" until two samples exist again.
+# shields.io cannot sum this itself: its github/downloads badge either totals
+# every asset — which would fold in appcast.xml polls and the zip Sparkle takes,
+# roughly doubling the figure — or reports a single asset in a single release,
+# which restarts at zero every time a release is cut.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 REPO="Mannafee/zielzeit-scalable-capital"
-SITE="https://mannafee.github.io/zielzeit-scalable-capital"
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --repo) REPO="$2"; shift 2 ;;
-        --site) SITE="${2%/}"; shift 2 ;;
-        *) echo "usage: Scripts/usage-badges [--repo OWNER/NAME] [--site URL]" >&2; exit 64 ;;
+        *) echo "usage: Scripts/usage-badges [--repo OWNER/NAME]" >&2; exit 64 ;;
     esac
 done
 
 BADGE_DIR="site/badge"
-EMERALD="3ECF8E"          # the app's own accent, so the badges read as its own
+EMERALD="3ECF8E"          # the app's own accent, so the badge reads as its own
 mkdir -p "$BADGE_DIR"
 
-now_epoch=$(date -u +%s)
-now_iso=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-
-# --- current counters -------------------------------------------------------
-
-releases=$(gh api "repos/$REPO/releases" --paginate)
-
-checks=$(printf '%s' "$releases" |
-    jq '[.[].assets[] | select(.name == "appcast.xml") | .download_count] | add // 0')
-downloads=$(printf '%s' "$releases" |
+downloads=$(gh api "repos/$REPO/releases" --paginate |
     jq '[.[].assets[] | select(.name | endswith(".dmg")) | .download_count] | add // 0')
-
-# --- history ----------------------------------------------------------------
-
-history=$(curl -fsSL "$SITE/badge/history.json" 2>/dev/null || echo '{"samples":[]}')
-printf '%s' "$history" | jq -e '.samples | type == "array"' >/dev/null 2>&1 ||
-    history='{"samples":[]}'
-
-# A sample is only taken when the newest one is a day old. Pushing to site/ also
-# runs this, and a handful of samples minutes apart would make every delta zero.
-# The threshold is 20h rather than 24h so a cron that drifts by a few minutes
-# still lands once a day instead of skipping every other one.
-last_epoch=$(printf '%s' "$history" | jq '.samples | last | .epoch // 0')
-if [ "$((now_epoch - last_epoch))" -ge 72000 ]; then
-    history=$(printf '%s' "$history" |
-        jq --arg at "$now_iso" \
-           --argjson epoch "$now_epoch" \
-           --argjson checks "$checks" \
-           --argjson downloads "$downloads" \
-           '.samples += [{at: $at, epoch: $epoch, checks: $checks, downloads: $downloads}]
-            | .samples |= (sort_by(.epoch) | .[-60:])')
-fi
-
-# --- active ------------------------------------------------------------------
-#
-# Measured between the newest sample and the newest one at least 20h older than
-# it, then scaled to a day. The scaling matters after an outage: two samples
-# three days apart hold three days of checks, and reporting that raw would show
-# a spike exactly when the workflow was broken.
-active=$(printf '%s' "$history" | jq -r '
-    (.samples | last) as $new
-    | (.samples | map(select($new.epoch - .epoch >= 72000)) | last) as $old
-    | if $new == null or $old == null then "—"
-      else (($new.checks - $old.checks) * 86400 / ($new.epoch - $old.epoch))
-           | if . < 0 then "—" else (. | round | tostring) end
-      end')
-
-if [ "$active" = "—" ]; then active_colour="lightgrey"; else active_colour="$EMERALD"; fi
-
-# --- badges ------------------------------------------------------------------
-
-printf '%s' "$history" | jq . > "$BADGE_DIR/history.json"
-
-jq -n --arg message "$active" --arg color "$active_colour" \
-    '{schemaVersion: 1, label: "active", message: $message, color: $color}' \
-    > "$BADGE_DIR/active.json"
 
 jq -n --argjson message "$downloads" --arg color "$EMERALD" \
     '{schemaVersion: 1, label: "downloads", message: ($message | tostring), color: $color}' \
     > "$BADGE_DIR/downloads.json"
 
-echo "active=$active downloads=$downloads checks=$checks samples=$(printf '%s' "$history" | jq '.samples | length')"
+echo "downloads=$downloads"
