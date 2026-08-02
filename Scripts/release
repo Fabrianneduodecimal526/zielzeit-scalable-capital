@@ -1,0 +1,186 @@
+#!/bin/bash
+#
+# Cut a release: bump the version, land it on main, tag it, and let the Release
+# workflow build and publish the downloads.
+#
+#     Scripts/release              # infer the version from the commits
+#     Scripts/release 1.4          # use this version
+#     Scripts/release minor        # force the bump kind
+#     Scripts/release --dry-run    # print the plan, change nothing
+#
+# Deliberately one script rather than steps in a document: the release that went
+# wrong went wrong at a hand step, and every check here exists because something
+# it catches has already happened once.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+DRY_RUN=false
+WANTED=""
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY_RUN=true ;;
+        major|minor|patch) WANTED="$arg" ;;
+        [0-9]*) WANTED="$arg" ;;
+        *) echo "usage: Scripts/release [VERSION|major|minor|patch] [--dry-run]" >&2; exit 64 ;;
+    esac
+done
+
+say()  { printf '\033[1m==>\033[0m %s\n' "$1"; }
+fail() { printf '\033[31merror:\033[0m %s\n' "$1" >&2; exit 1; }
+
+# ---------------------------------------------------------------- preflight
+
+command -v gh >/dev/null || fail "gh is not installed"
+gh auth status >/dev/null 2>&1 || fail "gh is not logged in — run: gh auth login"
+
+[ -n "$(git status --porcelain)" ] && fail "working tree is dirty — commit or stash first"
+
+say "Fetching"
+git fetch --quiet --tags origin
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+[ "$BRANCH" = "main" ] || fail "on branch '$BRANCH' — releases are cut from main"
+
+# The release must describe what is on the remote, not a local main that is
+# behind it or carrying unpushed commits.
+git merge-base --is-ancestor HEAD origin/main \
+    || fail "local main has commits that are not on origin/main — push them first"
+git merge --ff-only origin/main --quiet
+
+LAST_TAG=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo "")
+[ -n "$LAST_TAG" ] || fail "no v* tag to release against"
+
+# --------------------------------------------------------- infer the version
+
+# Merge commits are skipped: their subject is "Merge pull request #N", which
+# says nothing about what the branch contained.
+#
+# Read in a loop rather than with `mapfile`, which is bash 4 and macOS ships 3.2.
+SUBJECTS=()
+while IFS= read -r line; do
+    SUBJECTS+=("$line")
+done < <(git log --no-merges --format='%s' "$LAST_TAG..origin/main")
+[ "${#SUBJECTS[@]}" -gt 0 ] && [ -n "${SUBJECTS[0]}" ] \
+    || fail "no commits since $LAST_TAG — nothing to release"
+
+# Inference is best-effort and this repo's history is mixed: not every subject
+# is conventional, and an unprefixed one cannot be classified. So the reasoning
+# is printed per commit and the version can always be passed explicitly.
+BUMP="patch"
+RELEASE_WORTHY=false
+say "Commits since $LAST_TAG"
+for subject in "${SUBJECTS[@]}"; do
+    kind="patch"
+    case "$subject" in
+        *"!:"*|*"BREAKING CHANGE"*)      kind="major" ;;
+        feat*|i18n*)                     kind="minor" ;;
+        fix*|perf*)                      kind="patch" ;;
+        docs*|ci*|chore*|test*|refactor*) kind="none"  ;;
+        *)                               kind="patch" ;;   # unclassifiable: assume it ships something
+    esac
+    printf '    %-6s %s\n' "$kind" "$subject"
+    [ "$kind" = "none" ] || RELEASE_WORTHY=true
+    case "$kind" in
+        major) BUMP="major" ;;
+        minor) [ "$BUMP" = "major" ] || BUMP="minor" ;;
+    esac
+done
+
+$RELEASE_WORTHY || fail "only docs/ci/chore commits since $LAST_TAG — nothing users would notice"
+
+CURRENT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" Info.plist)
+IFS=. read -r MA MI PA <<<"$CURRENT"
+PA=${PA:-0}
+
+if [[ "$WANTED" =~ ^[0-9] ]]; then
+    NEW="$WANTED"
+    # Not the inferred kind: printing "1.1 -> 2.0 (patch)" invites the reader to
+    # trust an inference that was overridden.
+    BUMP="given"
+else
+    [ -n "$WANTED" ] && BUMP="$WANTED"
+    case "$BUMP" in
+        major) NEW="$((MA + 1)).0" ;;
+        minor) NEW="$MA.$((MI + 1))" ;;
+        # Two components while the patch is 0, matching v1.0 and v1.1, so a
+        # feature release stays "1.2" rather than becoming "1.2.0".
+        patch) NEW="$MA.$MI.$((PA + 1))" ;;
+    esac
+fi
+
+[ "$NEW" = "$CURRENT" ] && fail "version is already $CURRENT"
+git rev-parse -q --verify "refs/tags/v$NEW" >/dev/null && fail "tag v$NEW already exists"
+gh release view "v$NEW" >/dev/null 2>&1 && fail "a release named v$NEW already exists"
+
+BUILD=$(( $(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist) + 1 ))
+
+say "Releasing $CURRENT -> $NEW (build $BUILD, $BUMP)"
+if $DRY_RUN; then
+    say "Dry run — stopping here"
+    exit 0
+fi
+
+# ------------------------------------------------------------------- bump
+
+say "Running the tests"
+make test >/dev/null || fail "tests failed — not releasing"
+
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW" Info.plist
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" Info.plist
+
+# main is a protected branch, so the bump goes through a pull request. Pushing
+# it straight to main is rejected by the branch hook.
+WORK="release-$NEW"
+git checkout -q -B "$WORK"
+git add Info.plist
+git commit -q -m "chore: bump to $NEW"
+git push -q -u origin "$WORK"
+
+say "Opening the pull request"
+gh pr create --base main --head "$WORK" \
+    --title "chore: bump to $NEW" \
+    --body "Version bump for the v$NEW release. Cut by \`Scripts/release\`.
+
+\`CFBundleShortVersionString\` $CURRENT → $NEW, \`CFBundleVersion\` $BUILD. The Makefile reads
+\`VERSION\` from this plist, so the artifact filenames follow.
+
+$(printf '%s\n' "${SUBJECTS[@]}" | sed 's/^/- /')" >/dev/null
+
+say "Waiting for CI"
+gh pr checks "$WORK" --watch --interval 15 || fail "CI failed on the bump PR — nothing was tagged"
+
+say "Merging"
+gh pr merge "$WORK" --merge --delete-branch
+
+git checkout -q main
+git fetch --quiet origin
+git merge --ff-only origin/main --quiet
+git branch -q -D "$WORK" 2>/dev/null || true
+
+# ------------------------------------------------------------------- tag
+
+say "Tagging v$NEW"
+git tag "v$NEW"
+git push -q origin "v$NEW"
+
+say "Waiting for the release build"
+sleep 5
+RUN=$(gh run list --workflow=release.yml --limit 1 --json databaseId -q '.[0].databaseId')
+gh run watch "$RUN" --exit-status || fail "the release workflow failed — tag v$NEW is pushed but there is no release"
+
+# --------------------------------------------------------------- verify
+
+# The v1.1 release went out with an empty asset list, so "the workflow passed"
+# is not the check that matters: what a user can actually download is.
+say "Verifying the published release"
+read -r IS_DRAFT ASSETS < <(gh release view "v$NEW" --json isDraft,assets -q '"\(.isDraft) \(.assets|length)"')
+[ "$IS_DRAFT" = "false" ] || fail "v$NEW published as a draft — publish it by hand, do not create a second release on the tag"
+[ "$ASSETS" -eq 2 ] || fail "v$NEW has $ASSETS assets, expected 2 (.dmg and .zip)"
+
+DMG="https://github.com/$(gh repo view --json nameWithOwner -q .nameWithOwner)/releases/latest/download/Zielzeit-$NEW.dmg"
+CODE=$(curl -sI -L -o /dev/null -w '%{http_code}' "$DMG")
+[ "$CODE" = "200" ] || fail "the download URL returned $CODE — the asset is not reachable"
+
+say "Released v$NEW"
+gh release view "v$NEW" --json url -q .url
