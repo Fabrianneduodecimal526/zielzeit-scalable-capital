@@ -206,9 +206,18 @@ gh run watch "$RUN" --exit-status || fail "the release workflow failed — tag v
 # the verification below: what a user actually downloads is what matters.
 say "Signing the appcast"
 sparkle_tools
+
+# generate_appcast signs with *a* key it finds in the Keychain, not necessarily
+# the one in Info.plist. A regenerated or second key on this Mac would still
+# sign, upload and pass every check below — the appcast resolves, advertises
+# the right version — while every installed client rejects the signature,
+# because Sparkle trusts only SUPublicEDKey. Nothing else here catches that.
+[ "$("$SPARKLE_TOOLS/bin/generate_keys" -p)" = "$(/usr/libexec/PlistBuddy -c 'Print :SUPublicEDKey' Info.plist)" ] \
+    || fail "the Keychain signing key does not match SUPublicEDKey — clients would reject this update"
+
 STAGE=$(mktemp -d)
 gh release download "v$NEW" --pattern "Zielzeit-$NEW.zip" --dir "$STAGE" \
-    || fail "could not download Zielzeit-$NEW.zip from the release"
+    || fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — could not download Zielzeit-$NEW.zip from the release"
 
 # The zip, not the dmg: users click the dmg, Sparkle downloads the zip, which is
 # the archive format it handles most reliably and which `ditto --keepParent`
@@ -221,10 +230,23 @@ gh release download "v$NEW" --pattern "Zielzeit-$NEW.zip" --dir "$STAGE" \
     --download-url-prefix "https://github.com/$REPO/releases/download/v$NEW/" \
     --full-release-notes-url "https://github.com/$REPO/releases" \
     "$STAGE" \
-    || fail "generate_appcast failed — is the EdDSA private key in this Mac's Keychain?"
+    || fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — generate_appcast failed, is the EdDSA private key in this Mac's Keychain?"
 
-[ -f "$STAGE/appcast.xml" ] || fail "generate_appcast produced no appcast.xml"
-gh release upload "v$NEW" "$STAGE/appcast.xml" || fail "could not upload appcast.xml"
+[ -f "$STAGE/appcast.xml" ] \
+    || fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — generate_appcast produced no appcast.xml"
+
+# generate_appcast emits this when fed a single-arch build. The pipeline feeds
+# the universal zip, so it should never appear — but nothing else here checks
+# that, and if it ever does, Intel users are cut off from every future update
+# with no error anywhere. Written so a non-match (grep's normal case) does not
+# trip `set -e`: the `&&` list's status is the status of whichever side ran
+# last, so a clean grep failure (no match) is exit 1 with nothing after it to
+# raise it further, and the script continues.
+grep -q hardwareRequirements "$STAGE/appcast.xml" \
+    && fail "the appcast carries a hardware requirement — Intel users would be cut off from updates"
+
+gh release upload "v$NEW" "$STAGE/appcast.xml" --clobber \
+    || fail "the update feed is down until appcast.xml is uploaded to v$NEW by hand — could not upload appcast.xml"
 rm -rf "$STAGE"
 
 # --------------------------------------------------------------- verify
@@ -267,9 +289,26 @@ curl -fsSL -o "$FEED" "https://github.com/$REPO/releases/latest/download/appcast
 # Sparkle has emitted the version as an element and as an enclosure attribute in
 # different releases, so both are accepted rather than pinning to one shape.
 FEED_VERSION=$(xmllint --xpath 'string((//item[1]/*[local-name()="shortVersionString"] | //item[1]/enclosure/@*[local-name()="shortVersionString"])[1])' "$FEED" 2>/dev/null || echo "")
-rm -f "$FEED"
 [ "$FEED_VERSION" = "$NEW" ] \
     || fail "the appcast advertises '$FEED_VERSION', expected $NEW — users would not be offered this release"
+
+# The loop above checks the three hand-built URLs, but Sparkle never reads
+# those — it reads the enclosure url out of the appcast itself, which is a
+# fourth, separately hand-built string (--download-url-prefix, above) using
+# the versioned-tag form instead of latest/download/. Every other guard in
+# this script can pass while that one is wrong: the feed still parses,
+# still advertises v$NEW, and still points nowhere. So extract the real
+# enclosure url — the one Sparkle will genuinely fetch — rather than
+# re-deriving a second copy of it here.
+ENCLOSURE_URL=$(xmllint --xpath 'string(//item[1]/enclosure/@url)' "$FEED" 2>/dev/null || echo "")
+rm -f "$FEED"
+[ -n "$ENCLOSURE_URL" ] || fail "the appcast has no enclosure url — Sparkle would have nothing to download"
+for _ in 1 2 3 4 5 6; do
+    CODE=$(curl -sI -L -o /dev/null -w '%{http_code}' "$ENCLOSURE_URL")
+    [ "$CODE" = "200" ] && break
+    sleep 10
+done
+[ "$CODE" = "200" ] || fail "the appcast's enclosure url ($ENCLOSURE_URL) returned $CODE — Sparkle would offer an update it cannot download"
 
 say "Released v$NEW"
 gh release view "v$NEW" --json url -q .url

@@ -8,6 +8,11 @@ name: Release
 # once on first launch. The README documents that step. If a Developer ID is
 # ever added, sign and notarize here and the instructions can go.
 on:
+  # Cut releases with Scripts/release, not by pushing a tag by hand: any tag
+  # matching v* lands here and publishes, and a hand-pushed tag skips the
+  # appcast step entirely. The new release still becomes `latest`, so the
+  # feed 404s and every existing installation — not just this release —
+  # silently stops finding updates until someone notices and signs one by hand.
   push:
     tags: ["v*"]
   workflow_dispatch:
@@ -72,8 +77,9 @@ jobs:
             3. Go to **System Settings → Privacy & Security**, scroll down, and click
                **Open Anyway**. You only do this once.
 
-            Zielzeit updates itself from then on: later versions install in the background,
-            so this is the only time you download anything.
+            Zielzeit updates itself from then on: later versions download in the background and
+            install the next time you quit and reopen it, so this is the only time you download
+            anything.
 
             Zielzeit then walks you through connecting to your Scalable Capital account.
             See the [README](https://github.com/Mannafee/zielzeit-scalable-capital#readme) for the full

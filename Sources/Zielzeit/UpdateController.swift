@@ -15,7 +15,7 @@ final class UpdateController {
     /// Nil until `start()` runs, and only the real app path in `main` calls it.
     ///
     /// That is the gate, rather than a flag somewhere that can be forgotten:
-    /// `--once`, `--render`, `--shot`, `--icons`, `--appicon` and `--open` all
+    /// `--once`, `--render`, `--shot`, `--icons`, `--appicon`, `--menubar` and `--open` all
     /// return before the app path is reached, so no updater is ever built and no
     /// request is ever made. It matters because `PopoverView` renders its footer
     /// under `--render` and `--shot`, so a view that constructed an updater on

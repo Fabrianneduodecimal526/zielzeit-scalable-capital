@@ -289,9 +289,23 @@ no existing installation can ever be updated again — every user would have to 
 and download by hand, which is the exact situation Sparkle is here to prevent. Confirm it is present
 with `.build/sparkle-tools/<version>/bin/generate_keys -p`, and back it up outside the Keychain.
 
+That path only exists after `Scripts/release` has fetched the Sparkle tools at least once — it is
+not checked in, and on a machine you are restoring (the exact case where confirming the key matters
+most) it will not be there yet. `Scripts/release --dry-run` stops well before that fetch, so it will
+not create it either. Fetch the tarball the same way `sparkle_tools()` does — the URL, version and
+`SPARKLE_SHA` below are copy-pasteable from `Scripts/release` — and extract it to that path yourself
+before running `generate_keys -p`.
+
 The signing tools are not in Sparkle's SPM package; `Scripts/release` fetches the official tarball
 against a pinned SHA-256. Bumping `SPARKLE_VERSION` there means updating `SPARKLE_SHA` in the same
 commit, and the `from:` version in `Package.swift` alongside it.
+
+**"Pinned" here means `Package.resolved`, not the `from:` requirement.** `Package.swift` declares
+`from: "2.9.4"`, which SwiftPM resolves as `>=2.9.4 <3.0.0` — a floor, not a pin. The version actually
+built is whatever `Package.resolved` records, which is the committed pin. Running
+`swift package update` moves that pin to the newest matching release without touching
+`SPARKLE_VERSION`/`SPARKLE_SHA` in `Scripts/release`, so the framework and the signing tools can drift
+out of step. Bump all three together.
 
 ## Submitting
 
