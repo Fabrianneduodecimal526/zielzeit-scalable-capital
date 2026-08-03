@@ -130,6 +130,23 @@ extension FilmArtwork {
         case .popoverOpen:
             let t = FilmTimeline.eased(FilmTimeline.progress(atFrame: index))
             drawBar(plates.barYear, canvas: canvas)
+            // The spotlight releases here, easing tightness 1 → 0 across the
+            // scene, and it is drawn *before* the popover, not after. Two
+            // reasons, both load-bearing:
+            //   - Continuity with `.menuBar`: that scene's last frame calls
+            //     `spotlight(tightness: 1)` with the same `target`/`radius`
+            //     formula, so this scene's first frame (`t == 0` here) is
+            //     pixel-identical to it. The dimming lifts smoothly across
+            //     these 3s instead of snapping open in a single frame at the
+            //     cut — which is the defect this fixes.
+            //   - Draw order: a spotlight that is *revealing* the popover
+            //     must not also darken the thing it reveals. Drawing it
+            //     first dims only the bar/wallpaper underneath; the popover,
+            //     drawn after, is untouched by it and fades in purely via its
+            //     own `alpha: t` below, so "the dimming lifts" and "the
+            //     popover fades in" read as one gesture rather than the
+            //     popover fighting its own reveal.
+            spotlight(canvas, tightness: 1 - t)
             // Anchored at its top-right corner and easing 0.96 → 1, as NSPopover
             // does. This is the one place a plate is scaled, and only for ~0.4s of
             // transition where softness is invisible; it lands at exactly 1.0.
