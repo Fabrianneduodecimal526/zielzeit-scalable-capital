@@ -472,9 +472,13 @@ h3 { font-size: 20px; font-weight: 600; line-height: 1.32; margin: 0 0 10px; }
        top pad here is 2px and the bottom pad carries the balance.
      - For the same reason the German crop stops after the today's-money line
        instead of including the progress bar: 1px of clearance under the bar is
-       what made this one look broken, and the row is about the German text. */
-.frame--hero    { height: 123px; }
-.frame--hero img    { margin-top: -8px; }
+       what made this one look broken, and the row is about the German text.
+   The market chip's cycle glyph moved this block's top from y=17 to y=14, which
+   is why the hero offset is -5 and not -8. Everything below y=44 was unmoved, so
+   the other three crops did not need touching — but re-measure after any change
+   to the popover's layout rather than assuming that again. */
+.frame--hero    { height: 125px; }
+.frame--hero img    { margin-top: -5px; }
 .frame--chart   { height: 225px; }
 .frame--chart img   { margin-top: -145px; }
 .frame--sliders { height: 154px; }
