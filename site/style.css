@@ -565,6 +565,10 @@ pre code { font: 12.5px/1.65 var(--mono); color: var(--ink); white-space: pre; }
 }
 .cmd code { font: 13px/1.7 var(--mono); color: var(--ink); overflow-x: auto; min-width: 0; }
 .cmd--multi { align-items: flex-end; }
+/* The hero is centred and its wrap is wide, so the shared .cmd block — which fills
+   its container inside the setup steps — would run most of the page width for a
+   one-line command. Shrink it to the command and centre it. */
+.cmd--hero { width: max-content; max-width: 100%; margin: 0 auto 14px; }
 
 .copy {
   flex: none;

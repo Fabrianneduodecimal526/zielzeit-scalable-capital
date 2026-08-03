@@ -10,7 +10,15 @@
 <meta property="og:title" content="Zielzeit: when will my portfolio reach my goal?">
 <meta property="og:description" content="A free, open-source macOS menu bar app for Scalable Capital investors. Read-only, nothing leaves your Mac.">
 <meta property="og:url" content="https://mannafee.github.io/zielzeit-scalable-capital/">
-<meta property="og:image" content="https://mannafee.github.io/zielzeit-scalable-capital/img/popover.png">
+<!-- The 1280x640 card, not a popover screenshot. `summary_large_image` crops to
+     roughly 1.91:1, so the portrait popover this used to point at was
+     centre-cropped into a horizontal slice of the middle of the chart — an
+     unreadable smear, everywhere this link is shared. The card is drawn for that
+     aspect. Same file the repository's social preview uses; `make social` writes it. -->
+<meta property="og:image" content="https://mannafee.github.io/zielzeit-scalable-capital/img/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Zielzeit: when will my portfolio reach my goal? A menu bar item reading 17% and 2033, beside a large progress ring.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#ffffff">
 <link rel="icon" href="img/icon.png" type="image/png">
@@ -51,6 +59,15 @@
     <div class="actions" id="download">
       <a class="btn" href="https://github.com/Mannafee/zielzeit-scalable-capital/releases/latest/download/Zielzeit.dmg">Download for macOS</a>
       <a class="btn btn--plain" href="https://github.com/Mannafee/zielzeit-scalable-capital">View on GitHub</a>
+    </div>
+    <!-- Offered here because this page already asks for `brew install scalable-cli`
+         further down, so anyone who gets Zielzeit working has Homebrew anyway. It is
+         a convenience, not a way past the first-launch warning — the app is not
+         notarized either way, and saying otherwise is the kind of overclaim the
+         Safety section exists to avoid. -->
+    <div class="cmd cmd--hero">
+      <code>brew install --cask mannafee/tap/zielzeit</code>
+      <button class="copy" type="button" data-copy="brew install --cask mannafee/tap/zielzeit">Copy</button>
     </div>
     <p class="note">Requires macOS 15 or later and the official Scalable CLI.</p>
   </div>
@@ -284,8 +301,13 @@ make audit</code></pre>
         <p><em>Reach by</em> inverts it: pick a year, get the monthly contribution that lands on it.</p>
       </div>
       <div class="row__art">
+        <!-- The one place on this page that has to move. The prose beside it says
+             "live", and a still of a slider is the one screenshot that cannot show
+             the thing it is describing. Deliberately here and not in the hero: it is
+             556KB, and above the fold that trades the largest paint on the page for
+             a loop nobody has scrolled to yet. `loading="lazy"` keeps it free. -->
         <div class="frame frame--sliders">
-          <img src="img/popover.png" width="344" alt="The two sliders: save more, currently €500 a month, and reach by, showing €446 a month for the end of 2033" loading="lazy">
+          <img src="img/demo.gif" width="344" alt="The save more slider being dragged: the projected year counts down from 2033 to 2030, the sentence goes from 7.1 years to 3.5, and all three projection curves steepen to meet the goal line sooner" loading="lazy">
         </div>
       </div>
     </div>

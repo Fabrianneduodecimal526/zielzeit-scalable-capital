@@ -52,9 +52,12 @@ site: ## Serve the GitHub Pages site locally at http://localhost:8000
 	@mkdir -p site/img
 	@# menubar-states.png is deliberately not copied: the site dropped the states
 	@# strip, and docs/ still carries it for the README.
+	@# social-preview.png is copied because the page's og:image points at it: the
+	@# card has to be served from this origin, not linked out of docs/ on GitHub.
 	@cp docs/icon.png docs/menubar.png \
 	    docs/popover.png docs/popover-de.png \
-	    docs/setup.png docs/setup-de.png site/img/
+	    docs/setup.png docs/setup-de.png \
+	    docs/demo.gif docs/social-preview.png site/img/
 	@echo "Serving site/ at http://localhost:8000  (ctrl-C to stop)"
 	@python3 -m http.server 8000 --directory site
 
