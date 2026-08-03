@@ -18,7 +18,7 @@ UNIVERSAL := .build/apple/Products/Release/Zielzeit
 STATE ?= ready
 
 .DEFAULT_GOAL := help
-.PHONY: help build test audit once ui shots icon icons open app run install uninstall clean \
+.PHONY: help build test audit once ui shots demo social icon icons open app run install uninstall clean \
         release release-app dmg zip site
 
 help: ## Show available targets
@@ -84,6 +84,23 @@ shots: ## Regenerate the README screenshots in docs/ from synthetic data
 	@.build/debug/Zielzeit --appicon .build/readme-iconset >/dev/null
 	@cp .build/readme-iconset/icon_256x256@2x.png docs/icon.png
 	@echo "Wrote docs/{popover,popover-de,setup,setup-de,menubar,menubar-states,icon}.png"
+
+demo: ## Regenerate docs/demo.gif (the slider sweeping, for the top of the README)
+	@# Deliberately not part of `shots`: it rebuilds the popover once per frame and
+	@# takes about 40 seconds, and it only changes when the popover's layout does.
+	@swift build
+	@mkdir -p docs
+	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=en \
+		.build/debug/Zielzeit --demo docs/demo.gif --dark --scale 2
+
+social: ## Regenerate docs/social-preview.png (the GitHub link-unfurl card)
+	@swift build
+	@mkdir -p docs
+	@.build/debug/Zielzeit --social docs/social-preview.png
+	@# There is no API for the social preview, so this is the manual half:
+	@echo
+	@echo "Upload it at Settings → General → Social preview:"
+	@echo "  https://github.com/Mannafee/zielzeit-scalable-capital/settings"
 
 icon: ## Generate Zielzeit.icns (the app icon) from the drawn artwork
 	@swift build

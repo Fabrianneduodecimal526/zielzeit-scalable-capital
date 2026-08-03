@@ -51,8 +51,11 @@ out a projected arrival year and keeps it in your menu bar.
   <em>17% of the way there, up on the week, projected to arrive in 2033.</em>
 </p>
 
+Clicking it opens the popover. Drag **Save more** and the year, the sentence and all three curves
+move with it:
+
 <p align="center">
-  <img src="docs/popover.png" alt="The Zielzeit popover: projected year 2033, a projection chart with three scenarios, and sliders for saving more and picking a target year" width="344">
+  <img src="docs/demo.gif" alt="The Zielzeit popover with the Save more slider being dragged: the projected year counts down from 2033 to 2030, the sentence goes from 7.1 years to 3.5, and the three projection curves steepen to meet the goal line sooner" width="344">
 </p>
 
 Zielzeit speaks **English and German**, picked from your Mac's language and switchable in the app.
@@ -240,6 +243,16 @@ universal build, so it runs on Apple silicon and Intel, and you do not need Xcod
 1. Open the downloaded `Zielzeit.dmg` and drag Zielzeit onto the Applications folder.
 2. Open Zielzeit from Applications. The first launch will be blocked. See below.
 3. Look for the progress ring in your menu bar.
+
+Or from Homebrew, which is where you will be installing the Scalable CLI anyway:
+
+```sh
+brew install --cask mannafee/tap/zielzeit
+```
+
+That is one command instead of a download and a drag, and it is **not** a way around the
+first-launch warning below — the app is not notarized either way. ([Why the tap exists, and what it
+does not claim.](https://github.com/Mannafee/homebrew-tap))
 
 Zielzeit keeps itself up to date. Later versions install quietly in the background, so this is the
 only time you download anything; the new version takes effect the next time you quit and reopen

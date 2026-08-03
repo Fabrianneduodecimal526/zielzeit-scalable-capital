@@ -49,6 +49,30 @@ if let index = arguments.firstIndex(of: "--icons") {
     })
 }
 
+if let index = arguments.firstIndex(of: "--demo") {
+    guard arguments.count > index + 1 else {
+        FileHandle.standardError.write(Data("usage: zielzeit --demo <path.gif> [--dark] [--scale N]\n".utf8))
+        exit(2)
+    }
+    exit(MainActor.assumeIsolated {
+        RenderMode.demo(
+            path: arguments[index + 1],
+            dark: arguments.contains("--dark"),
+            scale: scaleArgument ?? 2
+        )
+    })
+}
+
+if let index = arguments.firstIndex(of: "--social") {
+    guard arguments.count > index + 1 else {
+        FileHandle.standardError.write(Data("usage: zielzeit --social <path> [--scale N]\n".utf8))
+        exit(2)
+    }
+    exit(MainActor.assumeIsolated {
+        RenderMode.socialCard(path: arguments[index + 1], scale: scaleArgument ?? 3)
+    })
+}
+
 if let index = arguments.firstIndex(of: "--menubar") {
     guard arguments.count > index + 1 else {
         FileHandle.standardError.write(Data("usage: zielzeit --menubar <path> [--dark] [--scale N]\n".utf8))
