@@ -254,6 +254,51 @@ enum RenderMode {
         return 0
     }
 
+    /// `zielzeit --film <dir> --plates <dir>`: composite every frame of the promo
+    /// film from a plate set, as numbered PNGs for ffmpeg to encode.
+    ///
+    /// Fast, unlike `demo`: there is no window and no layout to settle, because
+    /// every pixel of real UI already exists as a plate. That is the whole point
+    /// of the split — see `FilmPlates`.
+    static func film(directory: String, platesDirectory: String) -> Int32 {
+        _ = NSApplication.shared
+
+        guard let plates = FilmArtwork.load(from: platesDirectory) else {
+            complain("Could not load the plate set from \(platesDirectory). Run --film-plates first.")
+            return 1
+        }
+
+        let base = URL(fileURLWithPath: directory)
+        do {
+            try FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+        } catch {
+            complain("Could not create \(directory): \(error.localizedDescription)")
+            return 1
+        }
+
+        for index in 0..<FilmTimeline.frameCount {
+            guard let rep = FilmArtwork.frame(index, plates: plates),
+                  let png = rep.representation(using: .png, properties: [:]) else {
+                complain("Could not compose frame \(index).")
+                return 1
+            }
+            let name = String(format: "frame-%04d.png", index)
+            do {
+                try png.write(to: base.appendingPathComponent(name))
+            } catch {
+                complain("Could not write \(name): \(error.localizedDescription)")
+                return 1
+            }
+        }
+
+        print("""
+            Composed \(FilmTimeline.frameCount) frames → \(directory)  \
+            \(Int(FilmArtwork.size.width))×\(Int(FilmArtwork.size.height))px  \
+            \(FilmTimeline.duration)s @\(FilmTimeline.fps)fps
+            """)
+        return 0
+    }
+
     /// Runs the runloop, because SwiftUI resolves layout on subsequent turns and a
     /// capture taken immediately catches a half-laid-out view.
     private static func settle(for seconds: TimeInterval) {
@@ -265,7 +310,11 @@ enum RenderMode {
 
     /// The same offscreen-window `cacheDisplay` capture `shot(path:…)` makes, as a
     /// `CGImage` and with the window torn down again.
-    private static func capture(_ model: AppModel, dark: Bool, scale: Int) -> CGImage? {
+    /// Internal rather than private because `FilmPlates` captures its plate set
+    /// through exactly this path: a plate the film composites must be the same
+    /// pixels `--shot` and `demo.gif` produce, or the film would show a popover
+    /// the screenshots do not.
+    static func capture(_ model: AppModel, dark: Bool, scale: Int) -> CGImage? {
         let hosting = NSHostingController(
             rootView: PopoverView(model: model, onQuit: {})
                 .background(dark ? Color(white: 0.13) : Color(white: 0.97))
@@ -308,8 +357,13 @@ enum RenderMode {
         return rep.cgImage
     }
 
-    /// Encodes an animated GIF with ImageIO, so the docs build needs no ffmpeg or
+    /// Encodes an animated GIF with ImageIO rather than shelling out to ffmpeg or
     /// ImageMagick — the same reasoning that keeps Sparkle the only dependency.
+    ///
+    /// This used to say the docs build needs no ffmpeg at all. `make film` broke
+    /// that: ImageIO cannot write h264, and a 25-second GIF of the film would be
+    /// larger than the mp4 and worse. So ffmpeg is now a docs-build tool — but
+    /// `demo.gif` still does not need it, and nothing under `Sources/` invokes it.
     private static func writeGIF(
         _ frames: [CGImage], to url: URL, frameDuration: TimeInterval
     ) -> Bool {
