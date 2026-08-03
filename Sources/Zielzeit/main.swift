@@ -97,6 +97,21 @@ if let index = arguments.firstIndex(of: "--film-plates") {
     })
 }
 
+// `--film-plates` is tested for above `--film`, because `firstIndex(of: "--film")`
+// does not match `--film-plates` (they are separate argv elements, so there is no
+// prefix collision) — but keeping the order matches how a reader scans the file.
+if let index = arguments.firstIndex(of: "--film") {
+    let plates = arguments.firstIndex(of: "--plates")
+        .flatMap { arguments.count > $0 + 1 ? arguments[$0 + 1] : nil }
+    guard arguments.count > index + 1, let plates else {
+        FileHandle.standardError.write(Data("usage: zielzeit --film <frames-dir> --plates <plates-dir>\n".utf8))
+        exit(2)
+    }
+    exit(MainActor.assumeIsolated {
+        RenderMode.film(directory: arguments[index + 1], platesDirectory: plates)
+    })
+}
+
 if let index = arguments.firstIndex(of: "--shot") {
     guard arguments.count > index + 1 else {
         FileHandle.standardError.write(Data("usage: zielzeit --shot <path> [state] [--dark] [--scale N]\n".utf8))
