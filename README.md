@@ -244,6 +244,16 @@ universal build, so it runs on Apple silicon and Intel, and you do not need Xcod
 2. Open Zielzeit from Applications. The first launch will be blocked. See below.
 3. Look for the progress ring in your menu bar.
 
+Or from Homebrew, which is where you will be installing the Scalable CLI anyway:
+
+```sh
+brew install --cask mannafee/tap/zielzeit
+```
+
+That is one command instead of a download and a drag, and it is **not** a way around the
+first-launch warning below — the app is not notarized either way. ([Why the tap exists, and what it
+does not claim.](https://github.com/Mannafee/homebrew-tap))
+
 Zielzeit keeps itself up to date. Later versions install quietly in the background, so this is the
 only time you download anything; the new version takes effect the next time you quit and reopen
 Zielzeit. The `…` menu in the popover shows which version you are on, and `Check for updates` there

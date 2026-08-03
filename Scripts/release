@@ -338,5 +338,50 @@ for _ in 1 2 3 4 5 6; do
 done
 [ "$CODE" = "200" ] || fail "the appcast's enclosure url ($ENCLOSURE_URL) returned $CODE — Sparkle would offer an update it cannot download"
 
+# ------------------------------------------------------------------- cask
+
+# The tap is a second repository, so it can only go stale silently: a cask still
+# naming the previous version installs the previous version, and nothing in this
+# release fails because of it. It is bumped here rather than by hand for the same
+# reason nothing else in this script is.
+#
+# **Non-fatal, and last.** By this point the release is published and verified;
+# the tap is a convenience path beside the DMG, not the release itself, so a
+# GitHub outage or a missing checkout must not fail a release that shipped. It
+# says what to run instead.
+say "Bumping the Homebrew cask"
+CASK_DMG="https://github.com/$REPO/releases/download/v$NEW/Zielzeit-$NEW.dmg"
+# The published asset, not the local build: the cask's checksum has to match what
+# a user actually downloads, and only one of those two is verifiable from here.
+CASK_SHA=$(curl -fsSL "$CASK_DMG" | shasum -a 256 | cut -d' ' -f1)
+
+if [ "$DRY_RUN" = true ]; then
+    say "would bump mannafee/homebrew-tap to $NEW ($CASK_SHA)"
+elif [ -z "$CASK_SHA" ]; then
+    printf '\033[33mwarning:\033[0m could not checksum %s — bump the cask by hand\n' "$CASK_DMG" >&2
+else
+    TAP_DIR=$(mktemp -d)
+    if git clone -q --depth 1 "https://github.com/Mannafee/homebrew-tap.git" "$TAP_DIR" 2>/dev/null; then
+        CASK="$TAP_DIR/Casks/zielzeit.rb"
+        # Anchored to the stanza, not a bare version match: the caveats mention
+        # versions of other things and a loose pattern would rewrite those too.
+        sed -i '' \
+            -e "s|^  version \".*\"$|  version \"$NEW\"|" \
+            -e "s|^  sha256 \".*\"$|  sha256 \"$CASK_SHA\"|" \
+            "$CASK"
+        if git -C "$TAP_DIR" diff --quiet; then
+            say "the cask already names $NEW"
+        else
+            git -C "$TAP_DIR" commit -qam "cask: Zielzeit $NEW" \
+                && git -C "$TAP_DIR" push -q origin HEAD \
+                && say "bumped the cask to $NEW" \
+                || printf '\033[33mwarning:\033[0m could not push the cask bump — run it by hand in Mannafee/homebrew-tap\n' >&2
+        fi
+    else
+        printf '\033[33mwarning:\033[0m could not clone the tap — bump Casks/zielzeit.rb to %s (%s) by hand\n' "$NEW" "$CASK_SHA" >&2
+    fi
+    rm -rf "$TAP_DIR"
+fi
+
 say "Released v$NEW"
 gh release view "v$NEW" --json url -q .url

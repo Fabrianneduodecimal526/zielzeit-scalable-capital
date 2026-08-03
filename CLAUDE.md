@@ -325,6 +325,31 @@ the device.**
     could follow. Same reasoning as the sample year `--menubar` draws.
 - `make audit [AUDIT_ARGS=-v]`: check the security claims against the source (`Scripts/audit`)
 - `make test`, `make run`, `make install`, `make help`
+### The Homebrew tap
+
+`Mannafee/homebrew-tap` carries `Casks/zielzeit.rb`, so `brew install --cask mannafee/tap/zielzeit`
+works. It exists because this app's audience installs the official Scalable CLI with Homebrew
+anyway, so it fits the flow they are already in rather than adding one.
+
+- **It is not a way past Gatekeeper, and the README and the cask's `caveats` both say so.** That was
+  the original reason to build it and it is wrong: Zielzeit is ad-hoc signed and not notarized, so
+  the first launch is refused either way and `Open Anyway` is still the step. Homebrew removed
+  `--no-quarantine` and [requires notarization](https://github.com/Homebrew/brew/issues/20755) for
+  casks in its **official** tap from September 2026 — a personal tap still installs, but nothing
+  about quarantine improves. Don't let the install instructions drift into implying otherwise.
+- **The official `homebrew-cask` is a separate, later thing and is blocked twice over**: notarization
+  (a paid Apple Developer account), and notability — a *self-submitted* cask needs 225 stars, 90
+  forks and 90 watchers, three times the ordinary threshold, specifically to deter self-promotion.
+- `auto_updates true`, because Sparkle is the update channel. Without it `brew upgrade` treats a
+  self-updated app as drifted and reinstalls over it.
+- The cask points at the **versioned** `Zielzeit-<v>.dmg`, not the stable `Zielzeit.dmg` alias the
+  README links: a cask needs a URL that changes with the version or `brew` cannot tell an upgrade
+  from a reinstall.
+- `Scripts/release` bumps it, checksumming the **published** asset rather than the local build, since
+  the cask's `sha256` has to match what a user downloads. That step is **non-fatal and last**: the
+  release is already published and verified by then, and a tap that is a convenience path beside the
+  DMG must not fail a release that shipped. It prints what to run by hand instead.
+
 - `Scripts/release [VERSION|major|minor|patch] [--dry-run]`: cut a release — bump, PR, merge, tag,
   and verify the published downloads. **Never do those steps by hand**: v1.1 shipped with an empty
   asset list because the workflow's draft was left unpublished and a second release was created on
