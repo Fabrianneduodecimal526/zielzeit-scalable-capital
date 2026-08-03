@@ -109,12 +109,20 @@ extension FilmArtwork {
                     alpha: FilmTimeline.fade(atFrame: index, in: 0.5, out: 0.5))
 
         case .approach:
-            drawDesktop(plates.barYear, plate: plates.sweep[0], canvas: canvas)
+            // No popover here, deliberately: the cut is title → desktop with
+            // just the menu bar → the popover *appearing* in `.popoverOpen`.
+            // Drawing it early (via `drawDesktop`, as an earlier draft of this
+            // file did) made it visible continuously from this scene through
+            // `.menuBar` and into `.popoverOpen`'s own fade-in, so the fade
+            // had nothing to fade in from and the popover flickered out and
+            // back at that boundary instead.
+            drawBar(plates.barYear, canvas: canvas)
             // The spotlight closes on the menu-bar corner instead of a push-in.
             spotlight(canvas, tightness: FilmTimeline.eased(FilmTimeline.progress(atFrame: index)))
 
         case .menuBar:
-            drawDesktop(plates.barYear, plate: plates.sweep[0], canvas: canvas)
+            // Same reasoning as `.approach`: bar only, no popover.
+            drawBar(plates.barYear, canvas: canvas)
             spotlight(canvas, tightness: 1)
             caption(menuBarLine, in: canvas, size: 54, weight: .medium,
                     alpha: FilmTimeline.fade(atFrame: index, in: 0.4, out: 0.4))
@@ -147,8 +155,14 @@ extension FilmArtwork {
         case .safety:
             drawDesktop(plates.barYear, plate: plates.sweep[0], canvas: canvas, drift: -60)
             dim(canvas, alpha: 0.35 * FilmTimeline.fade(atFrame: index, in: 0.5, out: 0.5))
+            // `.bottomLeft`, not the default `.centre`: at only a 0.35 dim the
+            // chart's curves and dashed goal line are still bright enough that
+            // white text crossing them (as `.centre` does here) is illegible.
+            // The empty region to the popover's left is clear at every moment
+            // of this scene, same as `chartPan`/`sweep`.
             caption(safetyLine, in: canvas, size: 54, weight: .medium,
-                    alpha: FilmTimeline.fade(atFrame: index, in: 0.4, out: 0.4))
+                    alpha: FilmTimeline.fade(atFrame: index, in: 0.4, out: 0.4),
+                    at: .bottomLeft)
 
         case .endCard:
             dim(canvas, alpha: 0.7)
@@ -184,8 +198,20 @@ extension FilmArtwork {
                outer: NSColor.black.withAlphaComponent(0.40))
     }
 
+    /// `options` defaults to `[]`, matching `drawWallpaper`'s three calls: a
+    /// glow that fades to nothing exactly at `radius`, leaving the canvas past
+    /// it to whatever was drawn underneath — that is the wallpaper look and it
+    /// must not change. `spotlight` is the one caller that opts into
+    /// `.drawsAfterEndLocation`, which keeps painting the *outer* colour for
+    /// every point past `radius` instead of leaving them untouched. Without
+    /// that, `CGContext.drawRadialGradient` only paints the band between the
+    /// start and end circles — everything farther than `radius` from the
+    /// target was left at the wallpaper's full brightness, so the "spotlight"
+    /// was a dark ring floating over a fully-lit background, backwards from
+    /// the intent (dim surround, bright target).
     private static func radial(
-        _ canvas: NSRect, center: CGPoint, radius: CGFloat, inner: NSColor, outer: NSColor
+        _ canvas: NSRect, center: CGPoint, radius: CGFloat, inner: NSColor, outer: NSColor,
+        options: CGGradientDrawingOptions = []
     ) {
         guard let context = NSGraphicsContext.current?.cgContext,
               let gradient = CGGradient(
@@ -197,7 +223,7 @@ extension FilmArtwork {
         context.clip(to: canvas)
         context.drawRadialGradient(
             gradient, startCenter: center, startRadius: 0,
-            endCenter: center, endRadius: radius, options: []
+            endCenter: center, endRadius: radius, options: options
         )
         context.restoreGState()
     }
@@ -278,7 +304,8 @@ extension FilmArtwork {
         let radius = canvas.width * (1.1 - 0.86 * tightness)
         radial(canvas, center: target, radius: radius,
                inner: NSColor.black.withAlphaComponent(0),
-               outer: NSColor.black.withAlphaComponent(0.62 * tightness))
+               outer: NSColor.black.withAlphaComponent(0.62 * tightness),
+               options: .drawsAfterEndLocation)
     }
 
     private enum CaptionPlace { case centre, bottomLeft }
