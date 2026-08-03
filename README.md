@@ -51,8 +51,11 @@ out a projected arrival year and keeps it in your menu bar.
   <em>17% of the way there, up on the week, projected to arrive in 2033.</em>
 </p>
 
+Clicking it opens the popover. Drag **Save more** and the year, the sentence and all three curves
+move with it:
+
 <p align="center">
-  <img src="docs/popover.png" alt="The Zielzeit popover: projected year 2033, a projection chart with three scenarios, and sliders for saving more and picking a target year" width="344">
+  <img src="docs/demo.gif" alt="The Zielzeit popover with the Save more slider being dragged: the projected year counts down from 2033 to 2030, the sentence goes from 7.1 years to 3.5, and the three projection curves steepen to meet the goal line sooner" width="344">
 </p>
 
 Zielzeit speaks **English and German**, picked from your Mac's language and switchable in the app.

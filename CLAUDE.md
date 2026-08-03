@@ -293,6 +293,36 @@ the device.**
   **A single PNG at exactly 2× is the whole technique.** The
   `srcset` GitHub allows is only on `<source>` inside `<picture>`, and only the `prefers-color-scheme`
   form is documented, so density variants are not a route here.
+- `make demo`: regenerate `docs/demo.gif`, the popover with the "save more" slider sweeping, which
+  is what the README leads the popover section with. **Deliberately not part of `make shots`**: it
+  rebuilds the popover from scratch once per frame and takes about forty seconds, and it only needs
+  regenerating when the popover's layout changes. Two things about it:
+  - **A fresh window per frame, paying the 1.5s layout settle twenty times.** Sweeping the slider
+    inside one long-lived window is far quicker and gets the curves wrong: SwiftUI animates the
+    chart, so a capture taken before the transition *finishes* freezes a curve between two shapes
+    and `cacheDisplay` writes out the zigzag. Waiting long enough per frame costs most of the
+    saving anyway, and a frame built from scratch is exactly what `--shot` produces, so the demo
+    cannot show something the screenshots would not.
+  - It **ping-pongs** — out to `Report.extraSavingsCeiling` and back, dropping the turning points so
+    neither end is held for two frames — which is what lets it loop forever without a jump cut. The
+    GIF is encoded with ImageIO rather than ffmpeg or ImageMagick, on the same reasoning that keeps
+    Sparkle the only dependency: the docs build needs no toolchain it does not already have.
+- `make social`: regenerate `docs/social-preview.png`, the card every unfurl of the repo URL shows
+  (Reddit, Hacker News, Slack, Mastodon, LinkedIn). GitHub's automatic card is a generic
+  avatar-and-description strip, and **there is no API for replacing it** — the file has to be
+  uploaded by hand at Settings › General › Social preview, which is why the target prints the link.
+  Drawn in code in `SocialCardArtwork` for the same reason the app icon is.
+  - **The output stays 1280×640 and the drawing happens at 3×.** Publishing 2560×1280 looks like
+    the higher-quality choice and is worse on both counts: unfurlers lay these cards out at roughly
+    500–600 CSS pixels, so 1280 device pixels is *already* the pixel-exact 2× source, by the same
+    arithmetic `make shots` follows; and a 2560-wide PNG of this gradient comes out near 3MB,
+    over GitHub's 1MB ceiling, where rejection is a silent fall back to the automatic card. So the
+    quality is bought in the sampling — the arc terminals, glow falloff and vignette are computed
+    at 3× and filtered down — not in the dimensions. `--social` prints the file size against the
+    1024KB budget so a later change to the artwork cannot quietly cross it.
+  - It is **the one place outside `Strings` that holds display text**, and deliberately: the card is
+    baked into a PNG uploaded once to a repository setting, so there is no reader whose language it
+    could follow. Same reasoning as the sample year `--menubar` draws.
 - `make audit [AUDIT_ARGS=-v]`: check the security claims against the source (`Scripts/audit`)
 - `make test`, `make run`, `make install`, `make help`
 - `Scripts/release [VERSION|major|minor|patch] [--dry-run]`: cut a release — bump, PR, merge, tag,
