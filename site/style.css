@@ -399,15 +399,24 @@ h3 { font-size: 20px; font-weight: 600; line-height: 1.32; margin: 0 0 10px; }
   box-shadow: 0 2px 5px rgba(16, 22, 20, 0.07), 0 22px 44px -22px rgba(16, 22, 20, 0.45);
 }
 .frame img { width: 344px; max-width: none; }
-/* Ends just under the progress bar, so the chart below it is not
-   clipped mid-label. */
-.frame--hero    { height: 136px; }
+/* Every crop keeps roughly 9px of clear space above and below the block it
+   shows, measured off the screenshot rather than set by eye: `height` is
+   border-box, so the visible window is `height - 2` starting at `-margin-top`,
+   and a window that merely *reaches* the last row reads as a cut edge rather
+   than as a crop. Two of these are constrained by what sits next to them in the
+   popover and cannot simply be padded:
+     - The chart's "2033" annotation starts 2px under the progress bar, so the
+       top pad here is 2px and the bottom pad carries the balance.
+     - For the same reason the German crop stops after the today's-money line
+       instead of including the progress bar: 1px of clearance under the bar is
+       what made this one look broken, and the row is about the German text. */
+.frame--hero    { height: 123px; }
 .frame--hero img    { margin-top: -8px; }
-.frame--chart   { height: 222px; }
+.frame--chart   { height: 225px; }
 .frame--chart img   { margin-top: -145px; }
-.frame--sliders { height: 148px; }
-.frame--sliders img { margin-top: -370px; }
-.frame--facts   { height: 74px; }
+.frame--sliders { height: 154px; }
+.frame--sliders img { margin-top: -366px; }
+.frame--facts   { height: 69px; }
 .frame--facts img   { margin-top: -531px; }
 
 /* ── Cards ─────────────────────────────────────────────────── */
