@@ -63,12 +63,14 @@ enum FilmPlates {
             FileHandle.standardError.write(Data("  plate \(written)/\(sweepCount)\r".utf8))
         }
 
-        // Two, not three: a flat-caret plate was specified and cut, because the
-        // film never shows one — `--icons` is where the caret's three directions
-        // are judged, and an unused plate is a capture paid for nothing.
+        // One, and only one. A flat-caret plate was specified and cut because the
+        // film never shows one (`--icons` is where the caret's three directions are
+        // judged). A second "2030" plate was then also cut, for a better reason: the
+        // sweep scene used it to move the menu bar's year with the slider, which the
+        // app does not do and `ReportTests` guards against. An unused plate is a
+        // capture paid for nothing; a *misused* one is a promo that overclaims.
         let bars: [(String, Double, MoveDirection?, String)] = [
             ("menubar-2033.png", 0.17, .up, "2033"),
-            ("menubar-2030.png", 0.17, .up, "2030"),
         ]
         for (name, progress, direction, year) in bars {
             guard let rep = RenderMode.menuBarItem(

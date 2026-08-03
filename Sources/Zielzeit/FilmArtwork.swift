@@ -39,8 +39,10 @@ enum FilmArtwork {
 
     // MARK: - Copy
     //
-    // Eight lines, matching the transcript the site's dialog prints beneath the
-    // video. Change one and change the other, or the transcript stops being one.
+    // Five caption lines, matching the transcript the site's dialog prints beneath
+    // the video. Change one and change the other, or the transcript stops being one.
+    // The three `end*` constants below are end-card chrome, not captions, and are
+    // deliberately not in that transcript.
 
     private static let titleLine = "When will I actually get there?"
     private static let menuBarLine = "The year, in your menu bar."
@@ -56,7 +58,6 @@ enum FilmArtwork {
     struct Plates {
         let sweep: [NSImage]
         let barYear: NSImage
-        let barSoon: NSImage
     }
 
     static func load(from directory: String) -> Plates? {
@@ -69,9 +70,8 @@ enum FilmArtwork {
             guard let plate = image(String(format: "popover-%02d.png", index)) else { return nil }
             sweep.append(plate)
         }
-        guard let barYear = image("menubar-2033.png"),
-              let barSoon = image("menubar-2030.png") else { return nil }
-        return Plates(sweep: sweep, barYear: barYear, barSoon: barSoon)
+        guard let barYear = image("menubar-2033.png") else { return nil }
+        return Plates(sweep: sweep, barYear: barYear)
     }
 }
 
@@ -161,10 +161,17 @@ extension FilmArtwork {
 
         case .sweep:
             let plate = plates.sweep[FilmTimeline.sweepPlate(atFrame: index, plateCount: plates.sweep.count)]
-            // The bar's year moves with the popover's: it is the same projection.
-            let bar = FilmTimeline.sweepPlate(atFrame: index, plateCount: plates.sweep.count) > 8
-                ? plates.barSoon : plates.barYear
-            drawDesktop(bar, plate: plate, canvas: canvas, drift: -60)
+            // **The menu bar's year does not move with the slider, and must not.**
+            // The app deliberately behaves that way: the slider previews inside the
+            // popover only, and `ReportTests` guards it. An earlier version of this
+            // scene flipped the bar to a second, hardcoded "2030" plate partway
+            // through the sweep, which was wrong twice over — it advertised a
+            // feature that does not exist, and since the popover's year moves
+            // continuously across 48 plates while a single flip does not, the two
+            // numbers on screen disagreed for most of the scene (at frame 497 the
+            // popover read 2032 and the bar read 2030). The caption is still true:
+            // "watch the year move" is the popover's year, which is the real thing.
+            drawDesktop(plates.barYear, plate: plate, canvas: canvas, drift: -60)
             caption(sweepLine, in: canvas, size: 46, weight: .medium,
                     alpha: FilmTimeline.fade(atFrame: index, in: 0.4, out: 0.4),
                     at: .bottomLeft)

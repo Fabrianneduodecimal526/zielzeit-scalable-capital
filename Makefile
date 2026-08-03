@@ -137,8 +137,12 @@ film: ## Regenerate docs/promo.mp4 + poster (the 25s tour on the site hero)
 	@# Stated rather than assumed, as `--social` states its budget: a film that
 	@# quietly doubled in size is a slow hero nobody notices in review.
 	@echo
-	@du -k docs/promo.mp4 docs/promo-poster.jpg | \
-		awk '{ printf "  %-28s %6d KB\n", $$2, $$1 }'
+	@# `stat -f%z`, not `du -k`: du reports allocated blocks, which on APFS came
+	@# out 550KB above the real file size and made the budget this line exists to
+	@# state a fiction.
+	@for f in docs/promo.mp4 docs/promo-poster.jpg; do \
+		printf "  %-28s %6d KB\n" "$$f" $$(( $$(stat -f%z "$$f") / 1024 )); \
+	done
 
 social: ## Regenerate docs/social-preview.png (the GitHub link-unfurl card)
 	@swift build

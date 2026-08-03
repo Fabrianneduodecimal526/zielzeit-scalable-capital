@@ -48,27 +48,28 @@
 
   var dialog = document.getElementById("film");
   var trigger = document.querySelector("[data-film]");
-  if (!dialog || !trigger || typeof dialog.showModal !== "function") { return; }
-
-  var video = dialog.querySelector("video");
+  var video = dialog && dialog.querySelector("video");
+  /* All three up front, so nothing below has to re-check. Guarding `video` only
+     at some use sites is how the play-invariant listener below ends up being the
+     one that throws, which would leave the click handler registered and the
+     invariant silently uninstalled — the worst of both. */
+  if (!dialog || !trigger || !video || typeof dialog.showModal !== "function") { return; }
 
   trigger.addEventListener("click", function () {
     dialog.showModal();
-    if (video) {
-      /* Assign the poster on first open. A closed dialog is display:none, which
-         defers the video but not a `poster` attribute, so leaving it in the
-         markup billed every visitor 130KB for a frame most never see. */
-      if (video.dataset.poster) {
-        video.poster = video.dataset.poster;
-        delete video.dataset.poster;
-      }
-      var played = video.play();
-      /* Autoplay policy can refuse even a user-initiated play on some
-         configurations, and pausing mid-play rejects with AbortError. The
-         controls are there, so a refusal is recoverable and an unhandled
-         rejection in the console is not worth it. */
-      if (played && played.catch) { played.catch(function () {}); }
+    /* Assign the poster on first open. A closed dialog is display:none, which
+       defers the video but not a `poster` attribute, so leaving it in the markup
+       billed every visitor 130KB for a frame most never see. */
+    if (video.dataset.poster) {
+      video.poster = video.dataset.poster;
+      delete video.dataset.poster;
     }
+    var played = video.play();
+    /* Autoplay policy can refuse even a user-initiated play on some
+       configurations, and pausing mid-play rejects with AbortError. The controls
+       are there, so a refusal is recoverable and an unhandled rejection in the
+       console is not worth it. */
+    if (played && played.catch) { played.catch(function () {}); }
   });
 
   dialog.addEventListener("close", stop);
@@ -84,7 +85,6 @@
   });
 
   function stop() {
-    if (!video) { return; }
     video.pause();
     video.currentTime = 0;
   }
