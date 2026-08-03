@@ -292,6 +292,69 @@ h1 {
 }
 .fineprint { font-size: 13px; color: var(--muted); text-align: center; margin: 20px 0 0; }
 
+/* ── The play pill and the film ─────────────────────────────────
+   The pill sits inside `.stage` but changes nothing about it: the bezel, the
+   drawn wallpaper, the bar, the Dock and the z-order rules above are untouched.
+   It takes z-index 4 so it clears the popover at 3, and lives on the left for
+   the reason the button's own comment gives.
+
+   Nothing here autoplays. An autoplaying video above the fold would trade the
+   page's largest paint for a loop nobody has scrolled to — the same reasoning
+   that keeps demo.gif down in the feature rows — and it is also why
+   `prefers-reduced-motion` needs no case: the film moves only when asked. ── */
+.playpill {
+  position: absolute; z-index: 4;
+  left: clamp(20px, 4vw, 54px);
+  top: 50%; transform: translateY(-50%);
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 44px;
+  padding: 12px 20px;
+  font: inherit; font-size: 15px; font-weight: 600;
+  color: #0b2b28;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 26px -10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+.playpill:hover { transform: translateY(-50%) scale(1.03); background: #fff; }
+.playpill:focus-visible { outline: 3px solid var(--accent, #0e9e6b); outline-offset: 3px; }
+.playpill svg { width: 12px; height: 14px; flex: none; }
+
+.filmbox {
+  width: min(96vw, 1000px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: #0d1a17;
+  color: #e8efec;
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.7);
+}
+.filmbox::backdrop { background: rgba(8, 14, 12, 0.72); }
+.filmbox__video {
+  display: block;
+  width: 100%; height: auto;
+  border-radius: 16px 16px 0 0;
+  background: #000;
+}
+.filmbox__close {
+  position: absolute; top: 10px; right: 10px;
+  width: 34px; height: 34px;
+  font-size: 15px; line-height: 1;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border: 0; border-radius: 50%;
+  cursor: pointer;
+}
+.filmbox__text { padding: 20px 26px 24px; font-size: 14.5px; line-height: 1.6; }
+.filmbox__text p { margin: 0 0 10px; color: rgba(232, 239, 236, 0.72); }
+.filmbox__text ol { margin: 0 0 12px; padding-left: 22px; }
+.filmbox__text li { margin-bottom: 4px; }
+.filmbox__text .fineprint { margin: 0; text-align: left; color: rgba(232, 239, 236, 0.5); }
+
 /* ── Specs strip ───────────────────────────────────────────── */
 /* ── Icons ─────────────────────────────────────────────────────
    Drawn here as inline SVG rather than pulled from an icon set: the page loads
@@ -661,6 +724,21 @@ pre code { font: 12.5px/1.65 var(--mono); color: var(--ink); white-space: pre; }
   /* Nothing is a screen any more once the popover is stacked in flow, and a
      floating Dock with no desktop under it reads as a stray widget. */
   .stage__dock { display: none; }
+  /* Same reason: with the popover in flow there is no empty left third to float
+     over, so the pill joins the flow under it and reads as a caption. This rides
+     the existing 760px breakpoint rather than adding one of its own — the pill
+     has to move at exactly the width the stage stops being a screen. */
+  .playpill {
+    position: static; transform: none;
+    margin: 0 auto 18px;
+    display: flex; width: fit-content;
+  }
+  .playpill:hover { transform: scale(1.03); }
+}
+
+@media (max-width: 560px) {
+  .filmbox { width: 100vw; border-radius: 0; }
+  .filmbox__video { border-radius: 0; }
 }
 
 @media (max-width: 400px) {

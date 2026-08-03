@@ -58,7 +58,7 @@ site: ## Serve the GitHub Pages site locally at http://localhost:8000
 	    docs/popover.png docs/popover-de.png \
 	    docs/setup.png docs/setup-de.png \
 	    docs/demo.gif docs/social-preview.png \
-	    docs/promo.mp4 docs/promo-poster.png site/img/
+	    docs/promo.mp4 docs/promo-poster.jpg site/img/
 	@echo "Serving site/ at http://localhost:8000  (ctrl-C to stop)"
 	@python3 -m http.server 8000 --directory site
 
@@ -127,11 +127,17 @@ film: ## Regenerate docs/promo.mp4 + poster (the 25s tour on the site hero)
 		docs/promo.mp4
 	@# t = 13.0s: popover open, chart and all three scenario rows visible. The
 	@# poster is what everyone who never presses play actually sees.
-	@cp .build/film/frame-0390.png docs/promo-poster.png
+	@#
+	@# JPEG, not PNG, and it is the one asset here that should be lossy: this
+	@# frame as a PNG is 1.7MB against 129KB at q3, and it introduces an h264
+	@# video, so it cannot look worse than the thing it is a still of. Every
+	@# other image this repo publishes stays PNG for the opposite reason — they
+	@# are the product, not a placeholder for it.
+	@ffmpeg -y -loglevel error -i .build/film/frame-0390.png -q:v 3 docs/promo-poster.jpg
 	@# Stated rather than assumed, as `--social` states its budget: a film that
 	@# quietly doubled in size is a slow hero nobody notices in review.
 	@echo
-	@du -k docs/promo.mp4 docs/promo-poster.png | \
+	@du -k docs/promo.mp4 docs/promo-poster.jpg | \
 		awk '{ printf "  %-28s %6d KB\n", $$2, $$1 }'
 
 social: ## Regenerate docs/social-preview.png (the GitHub link-unfurl card)

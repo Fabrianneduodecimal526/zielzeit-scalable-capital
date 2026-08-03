@@ -108,9 +108,49 @@
         <span class="dock__tile dock__tile--3"></span>
         <span class="dock__tile dock__tile--4"></span>
       </div>
+
+      <!-- Left, not centred: the popover is anchored right and the Dock is
+           centred, so the left third is the only region empty at every width —
+           the same convergence the Dock's z-order note above describes. The
+           still stays the page's largest paint; nothing plays until this is
+           pressed, which is also why `prefers-reduced-motion` needs no case
+           here. -->
+      <button class="playpill" type="button" data-film>
+        <svg viewBox="0 0 12 14" aria-hidden="true"><path d="M1 1l10 6-10 6z" fill="currentColor"/></svg>
+        Watch the 25-second tour
+      </button>
     </div>
     <p class="fineprint">Every figure shown on this page is synthetic demo data, not a real account.</p>
   </div>
+
+  <!-- A native <dialog>: Escape closes it and focus containment comes free, so
+       there is no focus-trap JavaScript to get wrong. The captions are burned
+       into the film and therefore invisible to a screen reader, so the same
+       five lines are printed below as a transcript. Keep them in step with
+       FilmArtwork's copy. -->
+  <dialog class="filmbox" id="film" aria-label="Zielzeit: the 25-second tour">
+    <form method="dialog"><button class="filmbox__close" aria-label="Close">✕</button></form>
+    <!-- `data-poster`, not `poster`, and that is not pedantry: a closed <dialog>
+         is display:none, which defers the video itself but *not* its poster —
+         Chrome fetches it on page load, so the attribute cost 130KB on every
+         visit to a page where most people never press play. main.js assigns it on
+         first open. `preload="none"` is what defers the 2.5MB video. -->
+    <video class="filmbox__video" controls playsinline preload="none"
+           data-poster="img/promo-poster.jpg" width="1920" height="1200">
+      <source src="img/promo.mp4" type="video/mp4">
+    </video>
+    <div class="filmbox__text">
+      <p>Silent, 25 seconds. What it says, in order:</p>
+      <ol>
+        <li>When will I actually get there?</li>
+        <li>The year, in your menu bar.</li>
+        <li>Three scenarios. Yours is measured, not assumed.</li>
+        <li>Save more, and watch the year move.</li>
+        <li>Read-only. Nothing leaves your Mac.</li>
+      </ol>
+      <p class="fineprint">Every figure in the film is synthetic demo data, not a real account.</p>
+    </div>
+  </dialog>
 </section>
 
 <section class="specs">

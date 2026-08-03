@@ -15,6 +15,11 @@ on:
     paths:
       - "site/**"
       - "docs/*.png"
+      # The film's two artifacts. Without these a `make film` run that changed
+      # only the video would not redeploy, and the site would serve the previous
+      # cut until the weekly cron came round.
+      - "docs/*.mp4"
+      - "docs/*.jpg"
       - "Scripts/usage-badges"
       - ".github/workflows/pages.yml"
   # Weekly, so the README's downloads badge does not sit frozen between site
@@ -54,7 +59,7 @@ jobs:
              docs/popover.png docs/popover-de.png \
              docs/setup.png docs/setup-de.png \
              docs/demo.gif docs/social-preview.png \
-             docs/promo.mp4 docs/promo-poster.png site/img/
+             docs/promo.mp4 docs/promo-poster.jpg site/img/
 
       # The README's usage badges, served from the site as shields.io endpoints.
       # Non-fatal on purpose: the badges are a nicety and the site is not, so a
