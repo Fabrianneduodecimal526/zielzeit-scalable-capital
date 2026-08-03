@@ -18,7 +18,7 @@ UNIVERSAL := .build/apple/Products/Release/Zielzeit
 STATE ?= ready
 
 .DEFAULT_GOAL := help
-.PHONY: help build test audit once ui shots demo social icon icons open app run install uninstall clean \
+.PHONY: help build test audit once ui shots demo film social icon icons open app run install uninstall clean \
         release release-app dmg zip site
 
 help: ## Show available targets
@@ -57,7 +57,8 @@ site: ## Serve the GitHub Pages site locally at http://localhost:8000
 	@cp docs/icon.png docs/menubar.png \
 	    docs/popover.png docs/popover-de.png \
 	    docs/setup.png docs/setup-de.png \
-	    docs/demo.gif docs/social-preview.png site/img/
+	    docs/demo.gif docs/social-preview.png \
+	    docs/promo.mp4 docs/promo-poster.png site/img/
 	@echo "Serving site/ at http://localhost:8000  (ctrl-C to stop)"
 	@python3 -m http.server 8000 --directory site
 
@@ -95,6 +96,43 @@ demo: ## Regenerate docs/demo.gif (the slider sweeping, for the top of the READM
 	@mkdir -p docs
 	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=en \
 		.build/debug/Zielzeit --demo docs/demo.gif --dark --scale 2
+
+film: ## Regenerate docs/promo.mp4 + poster (the 25s tour on the site hero)
+	@# Two stages, and the split is the point. Stage 1 captures 50 real plates
+	@# through the same offscreen-window path `--shot` uses, paying its 1.5s
+	@# layout settle once each (~80s). Stage 2 composites 750 frames from those
+	@# plates with no AppKit layout at all, in seconds. Captured frame-by-frame
+	@# the film would take about nineteen minutes.
+	@#
+	@# Deliberately not part of `shots`, for the same reason `demo` is not: slow,
+	@# and only needed when the popover's layout changes.
+	@#
+	@# ffmpeg is the one docs-build tool this repo does not otherwise need, and
+	@# that is a considered cost: ImageIO cannot write h264, and a 25-second GIF
+	@# of this material is larger than the mp4 and worse.
+	@#
+	@# h264 only, no VP9 companion. Every current browser plays h264, VP9 would
+	@# save perhaps a quarter of an already-small file, and a second codec means
+	@# a second library for the docs build to depend on — which is what this
+	@# repo spends its restraint avoiding.
+	@command -v ffmpeg >/dev/null || { echo "film needs ffmpeg: brew install ffmpeg"; exit 1; }
+	@swift build
+	@mkdir -p docs
+	@rm -rf .build/film-plates .build/film
+	@ZIELZEIT_SC_BIN=$(PWD)/Scripts/sc-demo ZIELZEIT_GOAL=250000 ZIELZEIT_LANG=en \
+		.build/debug/Zielzeit --film-plates .build/film-plates --scale 2
+	@.build/debug/Zielzeit --film .build/film --plates .build/film-plates
+	@ffmpeg -y -loglevel error -framerate 30 -i .build/film/frame-%04d.png \
+		-c:v libx264 -preset slow -crf 20 -pix_fmt yuv420p -movflags +faststart \
+		docs/promo.mp4
+	@# t = 13.0s: popover open, chart and all three scenario rows visible. The
+	@# poster is what everyone who never presses play actually sees.
+	@cp .build/film/frame-0390.png docs/promo-poster.png
+	@# Stated rather than assumed, as `--social` states its budget: a film that
+	@# quietly doubled in size is a slow hero nobody notices in review.
+	@echo
+	@du -k docs/promo.mp4 docs/promo-poster.png | \
+		awk '{ printf "  %-28s %6d KB\n", $$2, $$1 }'
 
 social: ## Regenerate docs/social-preview.png (the GitHub link-unfurl card)
 	@swift build
