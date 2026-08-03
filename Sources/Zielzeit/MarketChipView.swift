@@ -21,17 +21,27 @@ struct MarketChipView: View {
     /// rotate to and so no reason to look tappable.
     let onCycle: (() -> Void)?
 
+    /// Hover alone cannot carry the affordance — see `cycleGlyph` — but it is
+    /// what confirms the guess once the eye has been drawn there.
+    @State private var isHovering = false
+
     var body: some View {
         if let onCycle {
-            Button(action: onCycle) { chip }
+            Button(action: onCycle) { chip(cyclable: true) }
                 .buttonStyle(.plain)
                 .help(Strings.chipHelp(move.windowLabel))
+                .onHover { isHovering = $0 }
+                // `pointerStyle` rather than pushing an `NSCursor`: the push/pop
+                // pair leaks a cursor off the stack whenever the popover closes
+                // with the pointer still over the chip, which is the ordinary way
+                // it closes. macOS 15 is the deployment target, so this is free.
+                .pointerStyle(.link)
         } else {
-            chip
+            chip(cyclable: false)
         }
     }
 
-    private var chip: some View {
+    private func chip(cyclable: Bool) -> some View {
         HStack(spacing: 3) {
             let glyph = Format.arrow(move.direction)
             if !glyph.isEmpty {
@@ -52,14 +62,39 @@ struct MarketChipView: View {
             Text(move.windowLabel)
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
+
+            if cyclable { cycleGlyph }
         }
-        .padding(.horizontal, 6)
+        .padding(.leading, 6)
+        .padding(.trailing, cyclable ? 4 : 6)
         .padding(.vertical, 2)
         .background {
-            Capsule().fill(tint.opacity(0.10))
+            Capsule().fill(tint.opacity(isHovering ? 0.22 : 0.10))
+            // A hairline ring, not just a darker fill. The fill is already a
+            // tint of the same hue the figure is drawn in, so brightening it
+            // alone reads as the market moving rather than as a control
+            // lighting up. An edge appearing is unambiguously a control.
+            Capsule().strokeBorder(tint.opacity(isHovering ? 0.45 : 0), lineWidth: 1)
         }
         .animation(.snappy(duration: 0.2), value: move.window)
+        .animation(.easeOut(duration: 0.12), value: isHovering)
         .contentShape(Capsule())
+    }
+
+    /// The chip's whole discoverability problem in one glyph.
+    ///
+    /// Everything else about it reads as a badge: a tinted capsule holding a
+    /// figure is the shape *every* read-only status pill in this popover takes,
+    /// so nothing said it could be turned. Hover and the pointer cursor both
+    /// come too late — they answer a question the reader has no reason to ask.
+    /// A pair of chevrons is the one mark macOS already spends on "there are
+    /// other values behind this one" (it is what a `Menu` and a `Stepper` wear),
+    /// and at 7pt it costs six points of a row that had spare width anyway.
+    private var cycleGlyph: some View {
+        Image(systemName: "chevron.up.chevron.down")
+            .font(.system(size: 7, weight: .semibold))
+            .foregroundStyle(.tertiary)
+            .padding(.leading, 1)
     }
 
     private var tint: Color { Theme.color(forDirection: move.direction) }
