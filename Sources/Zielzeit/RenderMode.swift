@@ -265,7 +265,11 @@ enum RenderMode {
 
     /// The same offscreen-window `cacheDisplay` capture `shot(path:…)` makes, as a
     /// `CGImage` and with the window torn down again.
-    private static func capture(_ model: AppModel, dark: Bool, scale: Int) -> CGImage? {
+    /// Internal rather than private because `FilmPlates` captures its plate set
+    /// through exactly this path: a plate the film composites must be the same
+    /// pixels `--shot` and `demo.gif` produce, or the film would show a popover
+    /// the screenshots do not.
+    static func capture(_ model: AppModel, dark: Bool, scale: Int) -> CGImage? {
         let hosting = NSHostingController(
             rootView: PopoverView(model: model, onQuit: {})
                 .background(dark ? Color(white: 0.13) : Color(white: 0.97))

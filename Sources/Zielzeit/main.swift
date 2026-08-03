@@ -87,6 +87,16 @@ if let index = arguments.firstIndex(of: "--menubar") {
     })
 }
 
+if let index = arguments.firstIndex(of: "--film-plates") {
+    guard arguments.count > index + 1 else {
+        FileHandle.standardError.write(Data("usage: zielzeit --film-plates <dir> [--scale N]\n".utf8))
+        exit(2)
+    }
+    exit(MainActor.assumeIsolated {
+        FilmPlates.capture(into: arguments[index + 1], dark: true, scale: scaleArgument ?? 2)
+    })
+}
+
 if let index = arguments.firstIndex(of: "--shot") {
     guard arguments.count > index + 1 else {
         FileHandle.standardError.write(Data("usage: zielzeit --shot <path> [state] [--dark] [--scale N]\n".utf8))
