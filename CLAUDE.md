@@ -306,7 +306,43 @@ the device.**
   - It **ping-pongs** — out to `Report.extraSavingsCeiling` and back, dropping the turning points so
     neither end is held for two frames — which is what lets it loop forever without a jump cut. The
     GIF is encoded with ImageIO rather than ffmpeg or ImageMagick, on the same reasoning that keeps
-    Sparkle the only dependency: the docs build needs no toolchain it does not already have.
+    Sparkle the only dependency. `make film` has since broken the stronger form of that rule — the
+    docs build *does* now need ffmpeg — but `demo.gif` still does not, and nothing in `Sources/`
+    shells out to it.
+- `make film`: regenerate `docs/promo.mp4` and `promo-poster.jpg`, the 25-second silent tour the
+  site hero's play pill opens. **Two stages, and the split is the whole design.** `--film-plates`
+  captures 50 real plates through the same offscreen-window path `--shot` uses, paying its 1.5s
+  layout settle once each (~80s); `--film` then composites 750 frames from those plates in Core
+  Graphics, with no AppKit layout, in seconds. Captured frame by frame the film would take about
+  **nineteen minutes**, which is why it is not one pass. Like `make demo`, **deliberately not part
+  of `make shots`**. Five things about it:
+  - **ffmpeg is the one docs-build tool this repo does not otherwise need**, and that breaks the rule
+    above knowingly: ImageIO cannot write h264, and a 25-second GIF of this material is both larger
+    than the mp4 and worse. `make film` checks for ffmpeg and says how to get it. **h264 only**, no
+    VP9 companion: every current browser plays h264, and a second codec would mean the docs build
+    depending on libvpx as well for perhaps a quarter off an already-small file.
+  - **Nothing is resampled, so there is no push-in.** The film is a 2× rendering of a 960×600 point
+    screen, so a `--scale 2` plate is drawn at exactly its 688×1324 pixels — a pixel diff against the
+    source plate comes back 0. A zoom would magnify a plate, which reads soft however much
+    resolution is thrown at it, the same trap `make shots` documents. Attention is directed by a
+    dimming **spotlight** instead. The one exception is the popover's open transition, which eases
+    0.96 → 1 over about 0.4s and lands on exactly 1.0.
+  - **The spotlight has to release as well as close.** `CGContext.drawRadialGradient` paints only
+    between its two circles unless given `.drawsAfterEndLocation`, so the first version dimmed a
+    *disc over* the popover and left the wallpaper bright — the exact inverse. And once fixed, a
+    scene that dims to full and hands over to one that does not dim at all flashes the whole canvas
+    at the cut, so `popoverOpen` eases the tightness back to 0 as the popover fades in. Both were
+    invisible in code review and obvious in the frames.
+  - **The early scenes must not draw the popover.** `title` → `approach` → `menuBar` is the film's
+    case that the year lives in the menu bar *before* anything is opened, so a popover on screen
+    through them makes the scene that opens it a flicker rather than a reveal.
+  - **`FilmTimeline` is in `ZielzeitCore` and the drawing is not**, for the usual reason: the cut is
+    the part that can be wrong invisibly. A scene boundary off by one frame is a caption that flashes
+    once or a plate held twice, and neither is findable by watching the video. `FilmTimelineTests`
+    pins the boundaries, that the scenes tile the duration with no gap, and that the sweep
+    ping-pongs through every plate and back — the same no-jump-cut choice `demo.gif` makes. Captions
+    live in `FilmArtwork`, which holds display text on the same licence `SocialCardArtwork` has: a
+    baked asset has no reader whose language it could follow, so the film is English only.
 - `make social`: regenerate `docs/social-preview.png`, the card every unfurl of the repo URL shows
   (Reddit, Hacker News, Slack, Mastodon, LinkedIn). GitHub's automatic card is a generic
   avatar-and-description strip, and **there is no API for replacing it** — the file has to be
@@ -706,6 +742,28 @@ anyone, which is the whole reason this shape was chosen over a launch ping.
   the app reads a brokerage account, and a reader who is nervous decides in the first screen. Reddit
   is where that was learned — the launch thread's objections were all about data and money, answered
   by a Safety section 190 lines down that nobody reached. Don't let features drift back above it.
+- **The hero still is still the hero.** The film is opened by a pill on the left of the stage, never
+  autoplayed in it: an autoplaying video above the fold trades the page's largest paint for a loop
+  nobody has scrolled to, the same reasoning that keeps `demo.gif` down in the feature rows. It also
+  means `prefers-reduced-motion` needs no case here, since nothing moves unasked. The pill is
+  **left** because the popover is anchored right and the Dock is centred, so the left third is the
+  only region empty at every width — the same convergence the Dock's z-order note describes. Below
+  the existing 760px breakpoint, where the stage stops being a screen and the popover goes into
+  flow, the pill joins the flow under it; it rides that breakpoint rather than introducing one.
+  Three things not to undo:
+  - **The poster is `data-poster`, assigned by `main.js` on first open.** A closed `<dialog>` is
+    `display: none`, which defers the video but *not* a `poster` attribute — Chrome fetches it on
+    load, so the plain attribute billed every visitor 130KB for a frame most never see. It is also a
+    **JPEG**, the one published image here that should be lossy, because it introduces an h264 video
+    and cannot look worse than the thing it is a still of. As a PNG it was 1.7MB.
+  - **`main.js` asserts an invariant rather than racing:** the film never plays to a shut dialog. A
+    `pause()` from the `close` handler does not stick when it lands while the `play()` promise is
+    still unsettled — playback starts anyway once it resolves, and a `display: none` dialog means the
+    film plays where nobody can see it. Closing within ~80ms reproduced it; keying off the `play`
+    event catches that ordering and every other one.
+  - **The dialog prints the film's five caption lines as a transcript**, because burned-in captions
+    are invisible to a screen reader. Change `FilmArtwork`'s copy and change that list, or the
+    transcript stops being one.
 - **On the site the audit is proof, not the opening, and the two audiences differ.** The README is
   read on GitHub and can be technical; the site is the front door for a Scalable investor who may not
   be a developer. A first draft opened `#safety` with the raw seven-line terminal output and moved the

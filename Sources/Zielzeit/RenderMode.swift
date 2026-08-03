@@ -357,8 +357,13 @@ enum RenderMode {
         return rep.cgImage
     }
 
-    /// Encodes an animated GIF with ImageIO, so the docs build needs no ffmpeg or
+    /// Encodes an animated GIF with ImageIO rather than shelling out to ffmpeg or
     /// ImageMagick — the same reasoning that keeps Sparkle the only dependency.
+    ///
+    /// This used to say the docs build needs no ffmpeg at all. `make film` broke
+    /// that: ImageIO cannot write h264, and a 25-second GIF of the film would be
+    /// larger than the mp4 and worse. So ffmpeg is now a docs-build tool — but
+    /// `demo.gif` still does not need it, and nothing under `Sources/` invokes it.
     private static func writeGIF(
         _ frames: [CGImage], to url: URL, frameDuration: TimeInterval
     ) -> Bool {
