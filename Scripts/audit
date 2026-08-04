@@ -14,8 +14,8 @@
 # Two rules for anything added here:
 #
 #   1. Every check searches Sources/ only. A pattern that also matched this file,
-#      the README or CLAUDE.md would pass because the documentation mentions the
-#      thing it promises not to do, which is the opposite of a check.
+#      the README or any other prose would pass because the documentation mentions
+#      the thing it promises not to do, which is the opposite of a check.
 #   2. A check states a fact a reader could verify by hand in a minute. This is
 #      not a linter and not a substitute for reading the code; it is the reading
 #      already done, reproducibly.

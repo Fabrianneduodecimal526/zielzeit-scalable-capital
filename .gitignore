@@ -15,7 +15,11 @@ site/badge/
 
 # Working notes from the Superpowers workflow: design specs, implementation
 # plans and the execution ledger. Local only. This repo is public and these are
-# scratch, not documentation — CLAUDE.md and CONTRIBUTING carry anything worth
+# scratch, not documentation — CONTRIBUTING and the code comments carry anything worth
 # keeping. They were committed once and scrubbed from history; keep them out.
 docs/superpowers/
 .superpowers/
+
+# The long-form engineering log. Local only now: it was committed for a while,
+# so it is still in history, but it is no longer part of the published repo.
+CLAUDE.md

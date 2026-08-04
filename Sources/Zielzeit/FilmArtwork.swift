@@ -12,7 +12,8 @@ import ZielzeitCore
 /// point screen, so a popover plate captured at `--scale 2` is 688×1324 and is
 /// drawn at exactly those pixels. That is why there is no push-in: magnifying a
 /// plate would resample it, which reads soft however much resolution is thrown
-/// at it — the trap CLAUDE.md's shots rule spends a paragraph on. The film
+/// at it — the same trap the README screenshots avoid by publishing every image
+/// at exactly twice its displayed width, never a fractional ratio. The film
 /// directs attention with a dimming spotlight instead of a zoom.
 @MainActor
 enum FilmArtwork {
@@ -376,8 +377,8 @@ extension FilmArtwork {
             // rendered glyph bounds against the canvas centre showed that
             // "fix" landed the text a whole line height too high. It is the
             // rect *not* matching the content height that causes the top/bottom
-            // origin confusion CLAUDE.md warns about; here it does, so the plain
-            // centring formula is the correct one.)
+            // origin confusion in the first place; here it does match, so the
+            // plain centring formula is the correct one.)
             box = NSRect(x: inset, y: (canvas.height - height) / 2, width: width, height: height)
         case .bottomLeft:
             // Left, because the popover is anchored right: the only region empty

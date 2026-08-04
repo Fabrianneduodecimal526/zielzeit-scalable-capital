@@ -70,9 +70,8 @@ Tests/ZielzeitCoreTests/       251 tests, including decoding against payloads
                                shaped from real CLI responses (never real data)
 ```
 
-`CLAUDE.md` in the repo root is a long-form engineering log: why each decision was made and which
-"obvious improvements" were tried and rejected. Worth skimming before you change behaviour, because
-several things that look like bugs are load-bearing.
+Several things in here that look like bugs are load-bearing, and the reasoning lives in the comments
+beside them rather than in a separate document. Read the surrounding comment before you "fix" one.
 
 ## Make targets
 
